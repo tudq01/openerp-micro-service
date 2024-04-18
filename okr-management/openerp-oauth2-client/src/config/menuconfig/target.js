@@ -1,0 +1,91 @@
+export const target = {
+  id: "MENU_OKR_TARGET",
+  icon: "LocalLibraryIcon",
+  text: "My OKR",
+  isPublic: false,
+  child: [
+    {
+      id: "MENU_OKR_TARGET.MENU_ITEM_1",
+      path: "/target/list",
+      isPublic: false,
+      text: "My Objective",
+      child: [],
+    },
+    {
+      id: "MENU_OKR_TARGET.MENU_ITEM_2",
+      path: "/target/manager",
+      isPublic: false,
+      text: "My Manager",
+      child: [],
+    },
+  ],
+};
+
+export const department = {
+  id: "MENU_OKR_DEPARTMENT",
+  icon: "Department",
+  isPublic: false,
+  child: [
+    {
+      id: "MENU_OKR_DEPARTMENT.MENU_ITEM_1",
+      path: "/department/list",
+      isPublic: false,
+      text: "Department",
+      child: [],
+    },
+  ],
+};
+
+export const team = {
+  id: "MENU_OKR_TEAM_SETTING",
+  icon: "PeopleIcon",
+  isPublic: false,
+  child: [
+    {
+      id: "MENU_OKR_TEAM_SETTING.MENU_ITEM_1",
+      path: "/teams/setting",
+      isPublic: false,
+      text: "Team",
+      child: [],
+    },
+  ],
+};
+
+export const company = {
+  id: "MENU_OKR_COMPANY",
+  icon: "ApartmentSharpIcon",
+  text: "Company OKR",
+  isPublic: false,
+  child: [
+    {
+      id: "MENU_OKR_COMPANY.MENU_ITEM_1",
+      path: "/target/company",
+      isPublic: false,
+      text: "Company OKR",
+      child: [],
+    },
+  ],
+};
+
+export const departmentOkr = {
+  id: "MENU_OKR_TEAM",
+  icon: "HomeSharpIcon",
+  text: "Team OKR",
+  isPublic: false,
+  child: [
+    {
+      id: "MENU_OKR_TEAM.MENU_ITEM_1",
+      path: "/target/team-member",
+      isPublic: false,
+      text: "Team Member OKR",
+      child: [],
+    },
+    {
+      id: "MENU_OKR_TEAM.MENU_ITEM_2",
+      path: "/target/team-okr",
+      isPublic: true,
+      text: "My Team OKR",
+      child: [],
+    },
+  ],
+};
