@@ -56,8 +56,8 @@ const ModalAddEmploy = ({ isOpen, handleSuccess, handleClose }) => {
   const methods = useForm({
     resolver: zodResolver(
       z.object({
-        userId: z.string({ required_error: "message.required" }).min(1, { message: "message.required" }),
-        // role: z.string({ required_error: "message.required" }).min(1, { message: "message.required" }),
+        userId: z.string({ required_error: "This field is required" }).min(1, { message: "This field is required" }),
+        // role: z.string({ required_error: "This field is required" }).min(1, { message: "This field is required" }),
       })
     ),
     mode: "onChange",

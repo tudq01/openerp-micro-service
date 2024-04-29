@@ -48,7 +48,7 @@ const TargetManager = () => {
             </Grid>
             <Grid item md={8} sm={8} xs={8}>
               <Typography>
-                <b>:</b> {data?.manager.lastName + " " + data?.manager.firstName}
+                <b>:</b> {data?.manager?.lastName + " " + data?.manager?.firstName}
               </Typography>
               <Typography>
                 <div
@@ -58,7 +58,7 @@ const TargetManager = () => {
                   }}
                 >
                   <b>:&nbsp;</b>
-                  {<Link href={`mailto:${data?.manager.email}`}>{data?.manager.email}</Link>}
+                  {<Link href={`mailto:${data?.manager?.email}`}>{data?.manager?.email}</Link>}
                 </div>
               </Typography>
             </Grid>

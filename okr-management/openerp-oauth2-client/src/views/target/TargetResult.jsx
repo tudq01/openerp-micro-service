@@ -2,6 +2,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Box, Button, Card, CardActions, CardContent, CardHeader, TextField } from "@material-ui/core";
 import Grid from "@material-ui/core/Grid";
 import { makeStyles } from "@material-ui/core/styles";
+import ClearIcon from "@mui/icons-material/Clear";
+import IconButton from "@mui/material/IconButton";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
@@ -69,7 +71,8 @@ const TargetResult = () => {
   const {
     control,
     handleSubmit,
-    formState: { errors },
+    reset,
+    formState: { errors, dirtyFields },
   } = methods;
 
   useEffect(() => {
@@ -81,38 +84,38 @@ const TargetResult = () => {
   }, [methods, target]);
 
   const save = async (values) => {
-    const data = getDirtyFields(values, methods.formState.dirtyFields);
+    const data = getDirtyFields(values, dirtyFields);
     console.log(data);
     let successHandler = (res) => {
+      reset();
       queryClient.invalidateQueries(["target-detail-result"]);
       successNoti("Add target judgement successfully!", 3000);
     };
 
     let errorHandlers = {
-      onError: (error) => errorNoti("Error create!", 3000),
+      onError: (error) => errorNoti(error?.response?.data, 3000),
     };
     if (target?.id) {
       updateTargetResult(target.id, data);
     } else {
-      request("post", `/targets/${id}/result`, successHandler, errorHandlers, data);
+      request("post", `/targets/${id}/result`, successHandler, errorHandlers, values); // user k dc viet vao phan nhan xet cua admin
     }
   };
 
   const updateTargetResult = (resultId, values) => {
     let successHandler = (res) => {
+      reset();
       queryClient.invalidateQueries(["target-detail-result"]);
       successNoti("Update target result successfully!", 3000);
     };
 
     let errorHandlers = {
-      onError: (error) => {
-        console.log(error)
-        errorNoti("Error update!", 3000)},
+      onError: (error) => errorNoti(error?.response?.data, 3000),
     };
 
     request("patch", `/targets/${resultId}/result`, successHandler, errorHandlers, values);
   };
-
+  // show manager to detail screen
   return (
     <>
       <div className="mt-10">
@@ -177,6 +180,17 @@ const TargetResult = () => {
                               onChange={(e) => {
                                 field.onChange(e.target.value);
                               }}
+                              endAdornment={
+                                <IconButton
+                                  className="mr-6"
+                                  size="small"
+                                  onClick={() => {
+                                    methods.setValue("selfRank", null);
+                                  }}
+                                >
+                                  <ClearIcon fontSize="small" />
+                                </IconButton>
+                              }
                               displayEmpty
                               style={{ padding: "5px 0 0 10px" }}
                             >
@@ -242,6 +256,17 @@ const TargetResult = () => {
                               onChange={(e) => {
                                 field.onChange(e.target.value);
                               }}
+                              endAdornment={
+                                <IconButton
+                                  className="mr-6"
+                                  size="small"
+                                  onClick={() => {
+                                    methods.setValue("managerRank", null);
+                                  }}
+                                >
+                                  <ClearIcon fontSize="small" />
+                                </IconButton>
+                              }
                               displayEmpty
                               style={{ padding: "5px 0 0 10px" }}
                             >

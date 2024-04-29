@@ -24,9 +24,11 @@ public class TargetServiceImpl implements TargetService {
     private final TargetRepo targetRepo;
 
     @Override
-    public Map<String, Object> findAll(String userId, String type, String fromDate, String toDate, int page, int size) {
+    public Map<String, Object> findAll(Long periodId, String keyword, String userId, String type, String fromDate,
+            String toDate,
+            int page, int size) {
         Pageable pagingSort = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "created_stamp"));
-        Page<Target> pageTuts = targetRepo.findAll(userId, type, fromDate, toDate, pagingSort);
+        Page<Target> pageTuts = targetRepo.findAll(periodId, keyword, userId, type, fromDate, toDate, pagingSort);
 
         Map<String, Object> response = new HashMap<>();
         response.put("targets", pageTuts.getContent());
@@ -81,6 +83,9 @@ public class TargetServiceImpl implements TargetService {
         if (newEntity.getTargetCategoryId() != null) {
             target.setTargetCategoryId(newEntity.getTargetCategoryId());
         }
+        if (newEntity.getPeriodId() != null) {
+            target.setPeriodId(newEntity.getPeriodId());
+        }
 
         return targetRepo.save(target);
 
@@ -95,10 +100,12 @@ public class TargetServiceImpl implements TargetService {
     }
 
     @Override
-    public Map<String, Object> findTargetTeam(String type, int teamId, String fromDate, String toDate, int page,
+    public Map<String, Object> findTargetTeam(Long periodId,
+            String keyword, String userId, String type, int teamId, String fromDate, String toDate, int page,
             int size) {
         Pageable pagingSort = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "created_stamp"));
-        Page<Target> pageTuts = targetRepo.findTargetTeam(type, teamId, fromDate, toDate, pagingSort);
+        Page<Target> pageTuts = targetRepo.findTargetTeam(periodId, keyword, userId, type, teamId, fromDate, toDate,
+                pagingSort);
 
         Map<String, Object> response = new HashMap<>();
         response.put("targets", pageTuts.getContent());

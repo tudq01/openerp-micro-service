@@ -1,15 +1,20 @@
+import { TextField } from "@material-ui/core";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import SearchIcon from "@mui/icons-material/Search";
 import { Box, Button, Chip, CircularProgress, IconButton, Stack, Typography } from "@mui/material";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { request } from "api";
-
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { request } from "api";
 import ModalAddTargetTeam from "components/modal/team/ModalAddTeamTarget";
+import SelectPeriod from "components/select/SelectPeriod";
 import dayjs from "dayjs";
 import { StandardTable } from "erp-hust/lib/StandardTable";
+import { debounce } from "lodash";
 import { useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom";
 import { formatDate } from "utils/date";
@@ -42,7 +47,7 @@ export const getColor = (status) => {
 };
 
 // okr for team
-const initState = { fromDate: null, toDate: null, page: 0, size: 5 };
+const initState = { periodId:null,keyword: null, userId: null, fromDate: null, toDate: null, page: 0, size: 5 };
 const TeamScreen = () => {
   const [filterParams, setFilterParams] = useState(initState);
   const [detailId, setDetail] = useState();
@@ -72,7 +77,7 @@ const TeamScreen = () => {
       });
       return teams.data;
     },
-    enabled: true,
+    enabled: !!filterParams.periodId,
   });
 
   function deleteHall(deletedId) {
@@ -230,186 +235,240 @@ const TeamScreen = () => {
       ),
     },
   ];
+  const handleSearch = debounce((value) => setFilterParams({ ...filterParams, keyword: value }), 100);
+  // const { data: users } = useQuery({
+  //   queryKey: ["user-manager"],
+  //   queryFn: async () => {
+  //     // let successHandler = (res) => {
+  //     //   setTarget(res);
+  //     // };
+  //     let errorHandlers = {
+  //       onError: (error) => errorNoti("Đã xảy ra lỗi trong khi tải dữ liệu!", 3000),
+  //     };
+
+  //     const res = await request("GET", `/users/manager`, null, errorHandlers, null, { params: { page: 0, size: 100 } });
+  //     return res.data;
+  //   },
+  //   enabled: true,
+  // });
+  // const userOptions = users?.employees?.length
+  //   ? users?.employees?.map((item) => {
+  //       return { label: item.user.email, value: item.userId };
+  //     })
+  //   : [];
+
+  const { data: users } = useQuery({
+    queryKey: ["user-option"],
+    queryFn: async () => {
+      const res = await request("GET", `/teams/members`, null, null, null, {});
+      return res.data.members;
+    },
+    enabled: true,
+  });
+
+  const userOptions = users?.length
+    ? users.map((item) => {
+        return { label: item.user.email, value: item.userId };
+      })
+    : [];
 
   return (
     <>
-      <StandardTable
-        title="Team Targets"
-        hideCommandBar
-        options={{
-          selection: false,
-          search: true,
-          sorting: true,
-          pageSize: filterParams.size,
-          // searchText: filterParams.name,
-          debounceInterval: 1000,
-        }}
-        page={filterParams.page}
-        columns={columns}
-        actions={[
-          {
-            icon: () => {
-              return (
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker
-                    closeOnSelect
-                    label="From Date"
-                    value={filterParams.fromDate ? dayjs(filterParams.fromDate) : null}
-                    inputProps={{ size: "small" }}
-                    componentsProps={{
-                      actionBar: {
-                        actions: ["clear"],
-                      },
-                    }}
-                    onChange={(value) => {
-                      const date = new Date(value);
-                      date.setHours(0, 420, 0, 0);
-                      setFilterParams({ ...filterParams, fromDate: date.toISOString() });
-                    }}
-                  />
-                </LocalizationProvider>
-              );
-            },
-            isFreeAction: true,
-          },
-          {
-            icon: () => {
-              return (
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <DatePicker
-                    closeOnSelect
-                    label="To Date"
-                    value={filterParams.toDate ? dayjs(filterParams.toDate) : null}
-                    inputProps={{ size: "small" }}
-                    componentsProps={{
-                      actionBar: {
-                        actions: ["clear"],
-                      },
-                    }}
-                    onChange={(value) => {
-                      setFilterParams({ ...filterParams, toDate: dayjs(value).endOf("d").toISOString() });
-                    }}
-                  />
-                </LocalizationProvider>
-              );
-            },
-            isFreeAction: true,
-          },
-          {
-            icon: () => {
-              return (
-                <Button
-                  onClick={() => {
-                    setFilterParams(initState);
-                    queryClient.invalidateQueries(["user-targets-teams-member"]);
-                  }}
-                >
-                  Reset
-                </Button>
-              );
-            },
-            tooltip: "Reset",
-            isFreeAction: true,
-          },
-          {
-            icon: () => {
-              return (
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    setOpenModalAddHall(true);
-                  }}
-                  color="primary"
-                >
-                  Add target
-                </Button>
-              );
-            },
-            tooltip: "Add target",
-            isFreeAction: true,
-          },
-        ]}
-        data={data?.targets}
-        totalCount={data?.totalItems}
-        onChangePage={(page, size) => setFilterParams({ ...filterParams, page, size })}
-        onSearchChange={(search) => setFilterParams({ page: 0, size: filterParams.size, name: search })}
-        detailPanel={[
-          {
-            tooltip: "Show key result",
-            cellStyle: {
-              maxWidth: "20px",
-            },
-            render: (rowData) => {
-              return (
-                <>
-                  <div
-                    style={{ display: "flex", flexDirection: "column", gap: "20px", padding: "20px 20px 10px 88px" }}
-                  >
-                    {rowData.keyResults.map((item, id) => (
-                      <div
-                        key={id}
-                        style={{ display: "flex", flexDirection: "row", gap: "10px", alignItems: "center" }}
-                      >
-                        <Stack spacing={2} direction="row" alignItems={"center"} key={id} className="mb-3 w-[26.8%]">
-                          <Chip variant="filled" color="warning" label={"KR"} size="small" />
-                          <Typography
-                            variant="subtitle1"
-                            gutterBottom
-                            className="hover:underline cursor-pointer"
-                            onClick={() => {
-                              history.push(`/target/${item.id}`);
-                            }}
-                          >
-                            {item.title}
-                          </Typography>
-                        </Stack>
-
-                        <Stack spacing={2} direction="row" className="w-[12%]">
-                          <Box sx={{ position: "relative", display: "inline-flex" }}>
-                            <CircularProgress
-                              disableShrink
-                              variant="determinate"
-                              thickness={4}
-                              size={55}
-                              value={item.progress}
-                              color={`${item.progress === 100 ? "success" : "primary"}`}
-                            ></CircularProgress>
-                            <Box
-                              sx={{
-                                top: 0,
-                                left: 0,
-                                bottom: 0,
-                                right: 0,
-                                position: "absolute",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-row justify-between">
+          <h1 className="text-2xl text-600">My Team Targets</h1>
+          <SelectPeriod filterParams={filterParams} setFilterParams={setFilterParams} />
+        </div>
+        <div className="flex flex-row justify-between mb-6 ">
+          <div className="flex flex-row gap-2 flex-wrap  h-10 ">
+            <TextField
+              size="medium"
+              variant="outlined"
+              value={filterParams.keyword || ""}
+              onChange={(e) => {
+                handleSearch(e.target.value);
+              }}
+              InputProps={{
+                endAdornment: <SearchIcon />,
+              }}
+            />
+         
+            <Select
+              labelId="demo-simple-select"
+              value={filterParams.userId ?? ""}
+              placeholder="Select user"
+              // readOnly
+              size="small"
+              label="user"
+              onChange={(e) => {
+                setFilterParams({ ...filterParams, userId: e.target.value });
+              }}
+              displayEmpty
+              style={{ padding: "0px 0 0 0px" }}
+            >
+              {userOptions.map((item) => (
+                <MenuItem value={item.value} key={item.value} style={{ display: "block", padding: "8px" }}>
+                  {item.label}
+                </MenuItem>
+              ))}
+            </Select>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                closeOnSelect
+                label="From Date"
+                value={filterParams.fromDate ? dayjs(filterParams.fromDate) : null}
+                inputProps={{ size: "small" }}
+                componentsProps={{
+                  actionBar: {
+                    actions: ["clear"],
+                  },
+                }}
+                onChange={(value) => {
+                  const date = new Date(value);
+                  date.setHours(0, 420, 0, 0);
+                  setFilterParams({ ...filterParams, fromDate: date.toISOString() });
+                }}
+              />
+            </LocalizationProvider>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                closeOnSelect
+                label="To Date"
+                value={filterParams.toDate ? dayjs(filterParams.toDate) : null}
+                inputProps={{ size: "small" }}
+                componentsProps={{
+                  actionBar: {
+                    actions: ["clear"],
+                  },
+                }}
+                onChange={(value) => {
+                  setFilterParams({ ...filterParams, toDate: dayjs(value).endOf("d").toISOString() });
+                }}
+              />
+            </LocalizationProvider>
+            <Button
+              onClick={() => {
+               setFilterParams((prev) => {
+                 return { ...initState, periodId: prev.periodId };
+               });
+                queryClient.invalidateQueries(["user-targets-teams-member"]);
+              }}
+            >
+              Reset
+            </Button>
+          </div>
+          <Button
+            className=""
+            size="small"
+            variant="contained"
+            onClick={() => {
+              setOpenModalAddHall(true);
+            }}
+            color="primary"
+          >
+            Add target
+          </Button>
+        </div>
+        <StandardTable
+          hideCommandBar
+          options={{
+            selection: false,
+            search: false,
+            sorting: true,
+            pageSize: filterParams.size,
+            toolbar: false,
+            // searchText: filterParams.name,
+            debounceInterval: 1000,
+          }}
+          page={filterParams.page}
+          columns={columns}
+          data={data?.targets}
+          totalCount={data?.totalItems}
+          onChangePage={(page, size) => setFilterParams({ ...filterParams, page, size })}
+          onSearchChange={(search) => setFilterParams({ page: 0, size: filterParams.size, name: search })}
+          detailPanel={[
+            {
+              tooltip: "Show key result",
+              cellStyle: {
+                maxWidth: "20px",
+              },
+              render: (rowData) => {
+                return (
+                  <>
+                    <div
+                      style={{ display: "flex", flexDirection: "column", gap: "20px", padding: "20px 20px 10px 88px" }}
+                    >
+                      {rowData.keyResults.map((item, id) => (
+                        <div
+                          key={id}
+                          style={{ display: "flex", flexDirection: "row", gap: "10px", alignItems: "center" }}
+                        >
+                          <Stack spacing={2} direction="row" alignItems={"center"} key={id} className="mb-3 w-[26.8%]">
+                            <Chip variant="filled" color="warning" label={"KR"} size="small" />
+                            <Typography
+                              variant="subtitle1"
+                              gutterBottom
+                              className="hover:underline cursor-pointer"
+                              onClick={() => {
+                                history.push(`/target/${item.id}`);
                               }}
                             >
-                              <Typography variant="caption" component="div" color="text.primary" className="text-base">
-                                {`${Math.round(item.progress)}%`}
-                              </Typography>
+                              {item.title}
+                            </Typography>
+                          </Stack>
+
+                          <Stack spacing={2} direction="row" className="w-[12%]">
+                            <Box sx={{ position: "relative", display: "inline-flex" }}>
+                              <CircularProgress
+                                disableShrink
+                                variant="determinate"
+                                thickness={4}
+                                size={55}
+                                value={item.progress}
+                                color={`${item.progress === 100 ? "success" : "primary"}`}
+                              ></CircularProgress>
+                              <Box
+                                sx={{
+                                  top: 0,
+                                  left: 0,
+                                  bottom: 0,
+                                  right: 0,
+                                  position: "absolute",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <Typography
+                                  variant="caption"
+                                  component="div"
+                                  color="text.primary"
+                                  className="text-base"
+                                >
+                                  {`${Math.round(item.progress)}%`}
+                                </Typography>
+                              </Box>
                             </Box>
-                          </Box>
-                        </Stack>
+                          </Stack>
 
-                        <div className="w-[17%]">{formatDate(item.fromDate)}</div>
-                        <div className="w-[17%]">{formatDate(item.toDate)}</div>
-                      </div>
-                      // <div key={id} style={{ display: "flex", flexDirection: "row", gap: "10px" }}>
-                      //   <div className="font-bold text-green-400">{item.title}</div>
-                      //   <div>{item.progress}</div>
+                          <div className="w-[17%]">{formatDate(item.fromDate)}</div>
+                          <div className="w-[17%]">{formatDate(item.toDate)}</div>
+                        </div>
+                        // <div key={id} style={{ display: "flex", flexDirection: "row", gap: "10px" }}>
+                        //   <div className="font-bold text-green-400">{item.title}</div>
+                        //   <div>{item.progress}</div>
 
-                      // </div>
-                    ))}
-                  </div>
-                </>
-              );
+                        // </div>
+                      ))}
+                    </div>
+                  </>
+                );
+              },
             },
-          },
-        ]}
-      />
-      <ModalAddTargetTeam isOpen={openModalAddHall} handleClose={handleCloseModal} />
+          ]}
+        />
+        <ModalAddTargetTeam isOpen={openModalAddHall} handleClose={handleCloseModal} />
+      </div>
     </>
   );
 };

@@ -50,7 +50,7 @@ const ModalAddDepartment = ({ isOpen, handleSuccess, handleClose }) => {
   const methods = useForm({
     resolver: zodResolver(
       z.object({
-        name: z.string({ required_error: "message.required" }).min(1, { message: "message.required" }),
+        name: z.string({ required_error: "This field is required" }).min(1, { message: "This field is required" }),
       })
     ),
     mode: "onChange",

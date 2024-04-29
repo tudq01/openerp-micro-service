@@ -14,10 +14,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.AllArgsConstructor;
+import openerp.openerpresourceserver.entity.Target;
 import openerp.openerpresourceserver.entity.TargetResult;
 import openerp.openerpresourceserver.entity.UserManger;
+import openerp.openerpresourceserver.repo.TargetResultRepo;
 import openerp.openerpresourceserver.request.target.CreateTargetResult;
 import openerp.openerpresourceserver.service.manager.ManagerService;
+import openerp.openerpresourceserver.service.target.TargetService;
 import openerp.openerpresourceserver.service.target.result.TargetResultService;
 
 @RestController
@@ -25,7 +28,9 @@ import openerp.openerpresourceserver.service.target.result.TargetResultService;
 public class TargetResultController {
 
     private TargetResultService targetResultService;
+    private TargetService targetService;
     private ManagerService managerService;
+    private TargetResultRepo targetResultRepo;
 
     // Target
     @GetMapping("/targets/{id}/result")
@@ -37,15 +42,32 @@ public class TargetResultController {
     public ResponseEntity<String> createKeyResult(Principal principal,
             @PathVariable String id, @RequestBody CreateTargetResult keyResultRequest) {
 
-        String userId = principal.getName();
+        String currentUser = principal.getName();
+
+        Optional<Target> target = targetService.findById(Long.parseLong(id));
+        if (target.isEmpty()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Target not found.");
+        }
+        String userId = target.get().getUserId();
+
         Optional<UserManger> manager = managerService.findByUserIdOptional(userId);
         if (manager.isEmpty()) {
             return ResponseEntity
                     .badRequest()
                     .body("You do not have a manager.");
         }
+        if (keyResultRequest.getSelfComment() != null || keyResultRequest.getSelfRank() != null) {
+            if (!currentUser.equals(target.get().getUserId())) {
+                return ResponseEntity
+                        .badRequest()
+                        .body("You are not the owner of this target.");
+            }
+        }
+
         if (keyResultRequest.getManagerComment() != null || keyResultRequest.getManagerRank() != null) {
-            if (userId != manager.get().getManagerId()) {
+            if (!currentUser.equals(manager.get().getManagerId())) {
                 return ResponseEntity
                         .badRequest()
                         .body("You are not the manager of this user.");
@@ -71,15 +93,36 @@ public class TargetResultController {
     @PatchMapping("/targets/{id}/result")
     public ResponseEntity<?> updateKeyResult(Principal principal, @RequestBody TargetResult request,
             @PathVariable String id) {
-        String userId = principal.getName();
+        String currentUser = principal.getName();
+
+        Optional<TargetResult> targetResult = targetResultRepo.findById(Long.parseLong(id));
+
+        Optional<Target> target = targetService.findById(targetResult.get().getTargetId());
+        if (target.isEmpty()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Target not found.");
+        }
+        String userId = target.get().getUserId();
+
         Optional<UserManger> manager = managerService.findByUserIdOptional(userId);
         if (manager.isEmpty()) {
             return ResponseEntity
                     .badRequest()
                     .body("You do not have a manager.");
         }
+
+        if (request.getSelfComment() != null || request.getSelfRank() != null) {
+            if (!currentUser.equals(target.get().getUserId())) {
+                return ResponseEntity
+                        .badRequest()
+                        .body("You are not the owner of this target.");
+            }
+        }
+
         if (request.getManagerComment() != null || request.getManagerRank() != null) {
-            if (userId != manager.get().getManagerId()) {
+
+            if (!currentUser.equals(manager.get().getManagerId())) {
                 return ResponseEntity
                         .badRequest()
                         .body("You are not the manager of this user.");

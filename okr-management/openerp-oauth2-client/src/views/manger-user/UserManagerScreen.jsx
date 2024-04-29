@@ -4,12 +4,13 @@ import { Button, IconButton } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "api";
 import ModalAddEmploy from "components/modal/ModalAddEmploy";
-import ModalAddMember from "components/modal/ModalAddMember";
 import { StandardTable } from "erp-hust/lib/StandardTable";
 import { useState } from "react";
 import { useHistory, useParams } from "react-router-dom/cjs/react-router-dom";
 import { errorNoti, successNoti } from "utils/notification";
 
+// admin can add all
+// manager add one
 const UserManagerScreen = () => {
   const [filterParams, setFilterParams] = useState({ page: 0, size: 5 });
   const [detailId, setDetail] = useState();
@@ -17,7 +18,7 @@ const UserManagerScreen = () => {
   const history = useHistory();
 
   const router = useParams();
-  const id = router.id;
+
   const name = router.name;
 
   const [openModalAddHall, setOpenModalAddHall] = useState(false);
@@ -26,7 +27,7 @@ const UserManagerScreen = () => {
   };
 
   const { data } = useQuery({
-    queryKey: ["user-manager", id, filterParams],
+    queryKey: ["user-manager", filterParams],
     queryFn: async () => {
       // let successHandler = (res) => {
       //   setTarget(res);
@@ -40,7 +41,6 @@ const UserManagerScreen = () => {
     },
     enabled: true,
   });
-  
 
   function deleteHall(deletedId) {
     let successHandler = () => {
@@ -65,9 +65,13 @@ const UserManagerScreen = () => {
   };
 
   const columns = [
-    { title: "Name", editable: "never", render: (row) => <>{`${row.user.firstName} ${row.user.lastName}`}</> },
-    { title: "Email", field: "user.email", editable: "never" },
-    
+    { title: "Name", editable: "never", render: (row) => <>{`${row?.user?.firstName} ${row?.user?.lastName}`}</> },
+    {
+      title: "Email",
+      editable: "never",
+      render: (row) => <>{`${row?.user?.email}`}</>,
+    },
+
     {
       title: "",
       editable: "never",
@@ -135,7 +139,6 @@ const UserManagerScreen = () => {
         totalCount={data?.totalItems}
         onChangePage={(page, size) => setFilterParams({ ...filterParams, page, size })}
         onSearchChange={(search) => setFilterParams({ page: 0, size: filterParams.size, name: search })}
-       
       />
       <ModalAddEmploy isOpen={openModalAddHall} handleClose={handleCloseModal} />
     </>

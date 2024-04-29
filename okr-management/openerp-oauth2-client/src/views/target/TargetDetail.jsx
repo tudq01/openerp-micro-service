@@ -20,6 +20,7 @@ import { errorNoti, successNoti } from "utils/notification";
 import * as z from "zod";
 import TargetResult from "./TargetResult";
 import { capitalizeWords, getColor } from "./TargetScreen";
+import TargetComment from "./comment/TargetComment";
 
 dayjs.extend(advancedFormat);
 const useStyles = makeStyles((theme) => ({
@@ -66,10 +67,10 @@ const TargetDetail = ({ isOpen, handleSuccess, handleClose }) => {
   const TARGET_TYPE = ["PERSONAL", "DEPARTMENT", "COMPANY"];
 
   const schema = z.object({
-    title: z.string({ required_error: "message.required" }).min(1, { message: "message.required" }),
+    title: z.string({ required_error: "This field is required" }).min(1, { message: "This field is required" }),
     progress: z.number({
-      required_error: "message.required",
-      invalid_type_error: "message.required",
+      required_error: "This field is required",
+      invalid_type_error: "This field is required",
     }),
     // progress: z.string().optional().nullable(),
     fromDate: z.string().optional().nullable(),
@@ -81,11 +82,11 @@ const TargetDetail = ({ isOpen, handleSuccess, handleClose }) => {
       .array(
         z.object({
           id: z.number().optional().nullable(),
-          title: z.string({ required_error: "message.required" }).min(1, { message: "message.required" }),
+          title: z.string({ required_error: "This field is required" }).min(1, { message: "This field is required" }),
           // progress: z.string().optional().nullable(),
           progress: z.number({
-            required_error: "message.required",
-            invalid_type_error: "message.required",
+            required_error: "This field is required",
+            invalid_type_error: "This field is required",
           }),
           fromDate: z.string().optional().nullable(),
           toDate: z.string().optional().nullable(),
@@ -100,14 +101,16 @@ const TargetDetail = ({ isOpen, handleSuccess, handleClose }) => {
     keyResults: z
       .array(
         z.object({
-          title: z.string({ required_error: "message.required" }).min(1, { message: "message.required" }),
+          title: z.string({ required_error: "This field is required" }).min(1, { message: "This field is required" }),
           // progress: z.string().optional().nullable(),
           progress: z.number({
-            required_error: "message.required",
-            invalid_type_error: "message.required",
+            required_error: "This field is required",
+            invalid_type_error: "This field is required",
           }),
-          fromDate: z.string({ required_error: "message.required" }).min(1, { message: "message.required" }),
-          toDate: z.string({ required_error: "message.required" }).min(1, { message: "message.required" }),
+          fromDate: z
+            .string({ required_error: "This field is required" })
+            .min(1, { message: "This field is required" }),
+          toDate: z.string({ required_error: "This field is required" }).min(1, { message: "This field is required" }),
         })
       )
       .default([])
@@ -275,10 +278,10 @@ const TargetDetail = ({ isOpen, handleSuccess, handleClose }) => {
                     </Box>
                   </CardContent>
                 </Grid>
-                <Grid item xs={4}></Grid>
-
-                <Grid item xs={4}>
-                  <Box display="flex" flexDirection="row" justifyContent="end">
+                <Grid item xs={6}></Grid>
+                <Grid item xs={2}>
+                  <Box display="flex" flexDirection="column" justifyContent="end" gridRowGap={10}>
+                    <Chip label={`${target?.period?.title}`} color={"info"} className="p-5 text-lg" />
                     <Chip
                       label={capitalizeWords(target?.status)}
                       color={getColor(target?.status)}
@@ -569,6 +572,7 @@ const TargetDetail = ({ isOpen, handleSuccess, handleClose }) => {
         </form>
       </FormProvider>
       <TargetResult />
+      <TargetComment owner={target?.user?.id} />
       <ModalUpdateTarget isOpen={openModalUpdate} handleClose={handleCloseModal} />
     </>
   );

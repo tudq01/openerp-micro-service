@@ -26,19 +26,15 @@ import { GiTeacher } from "react-icons/gi";
 import { buildMapPathMenu } from "utils/MenuUtils";
 import GroupsIcon from "@mui/icons-material/Groups";
 import { general } from "./menuconfig/general";
-import { hall } from "./menuconfig/hall";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 
 import { company, department, departmentOkr, target, team } from "./menuconfig/target";
-import { teacher } from "./menuconfig/teacher";
 import { user } from "./menuconfig/user";
 
 export const MENUS = [];
 
 MENUS.push(general);
 MENUS.push(user);
-MENUS.push(teacher);
-MENUS.push(hall);
 MENUS.push(company);
 MENUS.push(departmentOkr);
 MENUS.push(target);

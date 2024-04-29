@@ -63,13 +63,15 @@ const ModalUpdateTarget = ({ isOpen, handleSuccess, handleClose }) => {
   const TARGET_STATUS = ["NOT_STARTED", "APPROVE", "REJECT", "IN_PROGRESS", "WAIT_REVIEW", "CLOSED"];
   const TARGET_TYPE = ["PERSONAL", "DEPARTMENT", "COMPANY"];
 
-
-
   const schema = z.object({
-    title: z.string({ required_error: "message.required" }).min(1, { message: "message.required" }),
+    title: z.string({ required_error: "This field is required" }).min(1, { message: "This field is required" }),
     progress: z.number({
-      required_error: "message.required",
-      invalid_type_error: "message.required",
+      required_error: "This field is required",
+      invalid_type_error: "This field is required",
+    }),
+    periodId: z.number({
+      required_error: "This field is required",
+      invalid_type_error: "This field is required",
     }),
     // progress: z.string().optional().nullable(),
     fromDate: z.string().optional().nullable(),
@@ -155,6 +157,26 @@ const ModalUpdateTarget = ({ isOpen, handleSuccess, handleClose }) => {
     debounce((key, progress) => updateKeyResult(key, progress), DEBOUNCE_TIMEOUT),
     []
   );
+  const { data: periods } = useQuery({
+    queryKey: ["target-period-select"],
+    queryFn: async () => {
+      let errorHandlers = {
+        onError: (error) => errorNoti("Đã xảy ra lỗi trong khi tải dữ liệu!", 3000),
+      };
+
+      const res = await request("GET", `/targets/period`, null, errorHandlers, null, {
+        params: { page: 0, size: 10 },
+      });
+      return res.data.periods;
+    },
+    enabled: true,
+  });
+
+  const userOptions = periods?.length
+    ? periods.map((item) => {
+        return { label: item.title, value: item.id };
+      })
+    : [];
 
   return (
     <>
@@ -184,7 +206,7 @@ const ModalUpdateTarget = ({ isOpen, handleSuccess, handleClose }) => {
                   }
                 />
                 <Grid container spacing={2}>
-                  <Grid item xs={8}>
+                  <Grid item xs={4}>
                     <CardContent>
                       <Box display="flex" flexDirection="column" justifyContent="center" aria-label="Room">
                         <Controller
@@ -207,6 +229,45 @@ const ModalUpdateTarget = ({ isOpen, handleSuccess, handleClose }) => {
                           )}
                         />
                         <div>{errors?.title?.message}</div>
+                      </Box>
+                    </CardContent>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <CardContent>
+                      <Box display="flex" flexDirection="column" justifyContent="center">
+                        <Controller
+                          control={control}
+                          name={"periodId"}
+                          render={({ field }) => (
+                            <>
+                              <InputLabel id="demo-simple-period" style={{ paddingBottom: "3px", paddingLeft: "10px" }}>
+                                Period
+                              </InputLabel>
+
+                              <Select
+                                labelId="demo-simple-period"
+                                value={field.value ?? ""}
+                                size="small"
+                                label="Period"
+                                onChange={(e) => {
+                                  field.onChange(e.target.value);
+                                }}
+                                displayEmpty
+                              >
+                                {userOptions.map((item) => (
+                                  <MenuItem
+                                    value={item.value}
+                                    key={item.value}
+                                    style={{ display: "block", padding: "8px" }}
+                                  >
+                                    {item.label}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </>
+                          )}
+                        />
+                        <div>{errors?.periodId?.message}</div>
                       </Box>
                     </CardContent>
                   </Grid>
@@ -254,7 +315,9 @@ const ModalUpdateTarget = ({ isOpen, handleSuccess, handleClose }) => {
                                 type="date"
                                 value={dayjs(field.value).format("YYYY-MM-DD")}
                                 inputProps={{
-                                  max: dayjs(methods.watch("toDate")).endOf("d").format("YYYY-MM-DD"),
+                                  max:  methods.watch("toDate")
+                                    ? dayjs(methods.watch("toDate")).endOf("d").format("YYYY-MM-DD")
+                                    : null,
                                 }}
                                 error={errors?.title ? true : false}
                                 onChange={(value) => {

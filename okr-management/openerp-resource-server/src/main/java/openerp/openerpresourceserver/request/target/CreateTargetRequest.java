@@ -16,6 +16,7 @@ public class CreateTargetRequest {
     // target status
     String status;
     String type;
+    Long periodId;
 
     String userId;
     // String reviewerId;

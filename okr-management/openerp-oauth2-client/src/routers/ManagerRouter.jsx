@@ -1,13 +1,15 @@
+import PeriodDetailScreen from "components/modal/PeriodDetailScreen";
 import { Route, Switch, useRouteMatch } from "react-router";
 
-import UserManagerScreen from "views/manger-user/UserManagerScreen";
+import PeriodScreen from "views/target/period/PeriodScreen";
 
 export default function ManagerRouter() {
   let { path } = useRouteMatch();
   return (
     <div>
       <Switch>
-        <Route component={UserManagerScreen} exact path={`${path}/my-employee`}></Route>
+        <Route component={PeriodScreen} exact path={`${path}/period`}></Route>
+        <Route component={PeriodDetailScreen} exact path={`${path}/period/:id`}></Route>
       </Switch>
     </div>
   );

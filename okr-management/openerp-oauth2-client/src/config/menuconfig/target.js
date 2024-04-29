@@ -18,6 +18,14 @@ export const target = {
       text: "My Manager",
       child: [],
     },
+    {
+      //to remove
+      id: "MENU_OKR_TARGET.MENU_ITEM_3",
+      path: "/manager/period", //current admin can edit all, manager can add their employee to their department
+      isPublic: true,
+      text: "Target Period", //manager,admin
+      child: [],
+    },
   ],
 };
 
@@ -42,8 +50,10 @@ export const team = {
   isPublic: false,
   child: [
     {
+      //manager,admin
+      // add member to your current team
       id: "MENU_OKR_TEAM_SETTING.MENU_ITEM_1",
-      path: "/teams/setting",
+      path: "/team/setting",
       isPublic: false,
       text: "Team",
       child: [],

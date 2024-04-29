@@ -7,8 +7,8 @@ import { IconButton } from "@mui/material";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { request } from "api";
+import dayjs from "dayjs";
 import { Controller, FormProvider, useForm } from "react-hook-form";
-import { useParams } from "react-router-dom/cjs/react-router-dom.min";
 import { errorNoti, successNoti } from "utils/notification";
 import * as z from "zod";
 
@@ -42,22 +42,19 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const initialFormState = { progress: 0, status: "NOT_STARTED", type: "PERSONAL" };
-
-const ModalAddTeam = ({ isOpen, handleSuccess, handleClose }) => {
+const ModalAddPeriod = ({ isOpen, handleSuccess, handleClose }) => {
   const classes = useStyles();
   const queryClient = useQueryClient();
-  const router = useParams();
-  const id = router.id;
 
   const methods = useForm({
     resolver: zodResolver(
       z.object({
-        name: z.string({ required_error: "This field is required" }).min(1, { message: "This field is required" }),
+        title: z.string({ required_error: "This field is required" }).min(1, { message: "This field is required" }),
+        fromDate: z.string().optional().nullable(),
+        toDate: z.string().optional().nullable(),
       })
     ),
     mode: "onChange",
-    defaultValues: initialFormState,
   });
 
   const {
@@ -69,8 +66,8 @@ const ModalAddTeam = ({ isOpen, handleSuccess, handleClose }) => {
 
   const save = async (values) => {
     let successHandler = (res) => {
-      queryClient.invalidateQueries(["teams"]);
-      successNoti("Add team successfully!", 3000);
+      queryClient.invalidateQueries(["target-period"]);
+      successNoti("Add target successfully!", 3000);
       reset();
       handleClose();
     };
@@ -79,7 +76,7 @@ const ModalAddTeam = ({ isOpen, handleSuccess, handleClose }) => {
       onError: (error) => errorNoti("Error create!", 3000),
     };
 
-    request("post", `/departments/${id}/teams`, successHandler, errorHandlers, values);
+    request("post", `/targets/period`, successHandler, errorHandlers, values);
   };
 
   return (
@@ -100,7 +97,7 @@ const ModalAddTeam = ({ isOpen, handleSuccess, handleClose }) => {
               <CardHeader
                 title={
                   <Grid container direction="row" justifyContent="space-between" alignItems="center">
-                    {"Add team"}
+                    {"Add period"}
                     <IconButton aria-label="close" onClick={handleClose}>
                       <CloseIcon />
                     </IconButton>
@@ -108,12 +105,12 @@ const ModalAddTeam = ({ isOpen, handleSuccess, handleClose }) => {
                 }
               />
               <Grid container spacing={2}>
-                <Grid item xs={8}>
+                <Grid item xs={4}>
                   <CardContent>
                     <Box display="flex" flexDirection="column" justifyContent="center" aria-label="Room">
                       <Controller
                         control={control}
-                        name={"name"}
+                        name={"title"}
                         render={({ field }) => (
                           <>
                             <TextField
@@ -134,8 +131,75 @@ const ModalAddTeam = ({ isOpen, handleSuccess, handleClose }) => {
                     </Box>
                   </CardContent>
                 </Grid>
-              </Grid>
+                <Grid item xs={8}></Grid>
 
+                <Grid item xs={4}>
+                  <CardContent>
+                    <Box display="flex" flexDirection="column" justifyContent="center">
+                      <Controller
+                        control={control}
+                        name={"fromDate"}
+                        render={({ field }) => (
+                          <>
+                            <TextField
+                              {...field}
+                              id="date"
+                              label="From Date"
+                              type="date"
+                              value={field.value}
+                              inputProps={{
+                                max: methods.watch("toDate")
+                                  ? dayjs(methods.watch("toDate")).endOf("d").format("YYYY-MM-DD")
+                                  : null,
+                              }}
+                              error={errors?.title ? true : false}
+                              onChange={(value) => {
+                                field.onChange(value);
+                              }}
+                              InputLabelProps={{
+                                shrink: true,
+                              }}
+                            />
+                          </>
+                        )}
+                      />
+                    </Box>
+                  </CardContent>
+                </Grid>
+
+                <Grid item xs={4}>
+                  <CardContent>
+                    <Box display="flex" flexDirection="column" justifyContent="center">
+                      <Controller
+                        control={control}
+                        name={"toDate"}
+                        render={({ field }) => (
+                          <>
+                            <TextField
+                              {...field}
+                              id="date"
+                              label="To Date"
+                              type="date"
+                              inputProps={{
+                                min: dayjs(methods.watch("fromDate")).format("YYYY-MM-DD"),
+                              }}
+                              value={field.value}
+                              error={errors?.title ? true : false}
+                              onChange={(value) => {
+                                field.onChange(value);
+                              }}
+                              InputLabelProps={{
+                                shrink: true,
+                              }}
+                            />
+                          </>
+                        )}
+                      />
+                    </Box>
+                  </CardContent>
+                </Grid>
+                <Grid item xs={4}></Grid>
+              </Grid>
               <CardActions className={classes.action}>
                 <Button type="button" variant="contained" color="default">
                   Cancel
@@ -152,4 +216,4 @@ const ModalAddTeam = ({ isOpen, handleSuccess, handleClose }) => {
   );
 };
 
-export default ModalAddTeam;
+export default ModalAddPeriod;

@@ -5,8 +5,6 @@ import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -50,6 +48,9 @@ public class Target {
     @Column(name = "target_category_id")
     private Integer targetCategoryId;
 
+    @Column(name = "period_id")
+    private Long periodId;
+
     @Enumerated(EnumType.STRING)
     private TargetStatus status;
 
@@ -69,6 +70,11 @@ public class Target {
     @JoinColumn(name = "reviewer_id", nullable = false, referencedColumnName = "user_login_id")
     // @JsonIgnore it will not show nested join data
     private User reviewer;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "period_id", nullable = false, referencedColumnName = "id", insertable = false, updatable = false)
+    // @JsonIgnore it will not show nested join data
+    private TargetPeriod period;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "target_category_id", nullable = false, referencedColumnName = "id", insertable = false, updatable = false)

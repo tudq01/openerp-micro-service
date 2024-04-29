@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -46,12 +45,14 @@ public class TargetController {
 
     // User Manager
     // @Secured({ "ROLE_OKR_MANAGER" })
+    // tim ng quan ly ban
     @GetMapping("/users/your-manager")
     public ResponseEntity<Optional<UserManger>> getManager(Principal principal) {
         String userId = principal.getName();
         return ResponseEntity.ok().body(managerService.findByUserIdOptional(userId));
     }
 
+    // dsach nvien ban dang quan ly
     @GetMapping("/users/manager")
     public ResponseEntity<Map<String, Object>> getEmployeeManage(Principal principal,
             @RequestParam(defaultValue = "0") int page,
@@ -61,6 +62,7 @@ public class TargetController {
         return ResponseEntity.ok().body(managerService.findManageEmployee(userId, page, size));
     }
 
+    // manager quan ly nhung nguoi nao
     @GetMapping("/users/admin/manager")
     public ResponseEntity<Map<String, Object>> getAdminEmployeeManage(@RequestParam(required = false) String managerId,
             @RequestParam(defaultValue = "0") int page,
@@ -99,8 +101,11 @@ public class TargetController {
     }
 
     // Target
+
     @GetMapping("/targets")
     public ResponseEntity<Map<String, Object>> getTarget(Principal principal,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false, defaultValue = "0") long periodId,
             @RequestParam(required = false) String userId,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String fromDate,
@@ -108,7 +113,8 @@ public class TargetController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "3") int size) {
 
-        return ResponseEntity.ok().body(targetService.findAll(userId, type, fromDate, toDate, page, size));
+        return ResponseEntity.ok().body(
+                targetService.findAll(periodId, keyword, userId, type, fromDate, toDate, page, size));
     }
 
     @GetMapping("/targets/{id}")
@@ -119,6 +125,8 @@ public class TargetController {
 
     @GetMapping("/targets/me")
     public ResponseEntity<Map<String, Object>> getMyTarget(Principal principal,
+            @RequestParam(required = false) long periodId,
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String fromDate,
             @RequestParam(required = false) String toDate,
@@ -127,11 +135,15 @@ public class TargetController {
 
         String userId = principal.getName();
 
-        return ResponseEntity.ok().body(targetService.findAll(userId, type, fromDate, toDate, page, size));
+        return ResponseEntity.ok().body(
+                targetService.findAll(periodId, keyword, userId, type, fromDate, toDate, page, size));
     }
 
     @GetMapping("/targets/team")
     public ResponseEntity<Map<String, Object>> getMyTargetTeam(
+            @RequestParam(required = false) long periodId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String userId,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) int teamId,
             @RequestParam(required = false) String fromDate,
@@ -139,7 +151,9 @@ public class TargetController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size) {
 
-        return ResponseEntity.ok().body(targetService.findTargetTeam(type,teamId, fromDate, toDate, page, size));
+        return ResponseEntity.ok()
+                .body(targetService.findTargetTeam(
+                        periodId, keyword, userId, type, teamId, fromDate, toDate, page, size));
     }
 
     @PostMapping("/targets")
@@ -157,6 +171,7 @@ public class TargetController {
         target.setToDate(targetRequest.getToDate());
         target.setStatus(status);
         target.setUserId(userId);
+        target.setPeriodId(targetRequest.getPeriodId());
         target.setTargetCategoryId(targetRequest.getTargetCategoryId());
 
         target.setType(TargetType.valueOf(targetRequest.getType()));
