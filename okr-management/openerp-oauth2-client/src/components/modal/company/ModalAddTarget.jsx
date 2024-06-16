@@ -14,16 +14,17 @@ import Grid from "@material-ui/core/Grid";
 import { makeStyles } from "@material-ui/core/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import { IconButton } from "@mui/material";
-import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "api";
+import FormItem from "components/form/FormItem";
 import dayjs from "dayjs";
 import { Controller, FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { errorNoti, successNoti } from "utils/notification";
+import { capitalizeWords } from "views/target/TargetScreen";
 import * as z from "zod";
 
 const useStyles = makeStyles((theme) => ({
@@ -94,6 +95,10 @@ const ModalAddTargetCompany = ({ isOpen, handleSuccess, handleClose }) => {
                 required_error: "This field is required",
                 invalid_type_error: "This field is required",
               }),
+              weighted: z.number({
+                required_error: "This field is required",
+                invalid_type_error: "This field is required",
+              }),
               fromDate: z.string().optional().nullable(),
               toDate: z.string().optional().nullable(),
             })
@@ -111,8 +116,8 @@ const ModalAddTargetCompany = ({ isOpen, handleSuccess, handleClose }) => {
   const { data: categories } = useQuery({
     queryKey: ["target-category"],
     queryFn: async () => {
-      const res = await request("GET", `/targets/categories`, null, null, null, {});
-      return res.data;
+      const res = await request("GET", `/targets/categories`, null, null, null, { page: 0, size: 20 });
+      return res.data?.categories || [];
     },
     enabled: true,
   });
@@ -133,6 +138,11 @@ const ModalAddTargetCompany = ({ isOpen, handleSuccess, handleClose }) => {
   const { append, remove } = useFieldArray({ control, name: "keyResults" });
 
   const save = async (values) => {
+    // const weight = values.keyResults.reduce((acc, item) => acc + item.weighted, 0);
+    // if (weight !== 100 && values.keyResults.length > 0) {
+    //   errorNoti("Weight must sum up to 100!", 3000);
+    //   return;
+    // }
     let successHandler = (res) => {
       queryClient.invalidateQueries(["user-targets"]);
       successNoti("Add target successfully!", 3000);
@@ -141,7 +151,7 @@ const ModalAddTargetCompany = ({ isOpen, handleSuccess, handleClose }) => {
     };
 
     let errorHandlers = {
-      onError: (error) => errorNoti("Error create!", 3000),
+      onError: (error) => errorNoti(error?.response?.data, 3000),
     };
 
     request("post", `/targets`, successHandler, errorHandlers, values);
@@ -151,7 +161,7 @@ const ModalAddTargetCompany = ({ isOpen, handleSuccess, handleClose }) => {
     queryKey: ["target-period-select"],
     queryFn: async () => {
       let errorHandlers = {
-        onError: (error) => errorNoti("Đã xảy ra lỗi trong khi tải dữ liệu!", 3000),
+        onError: (error) => errorNoti("Error loading data", 3000),
       };
 
       const res = await request("GET", `/targets/period`, null, errorHandlers, null, {
@@ -202,17 +212,18 @@ const ModalAddTargetCompany = ({ isOpen, handleSuccess, handleClose }) => {
                         name={"title"}
                         render={({ field }) => (
                           <>
-                            <TextField
-                              {...field}
-                              id="name"
-                              value={field.value}
-                              error={errors?.title ? true : false}
-                              onChange={(value) => {
-                                field.onChange(value);
-                              }}
-                              label="Title"
-                              InputLabelProps={{ shrink: true }}
-                            />
+                            <FormItem label="Title">
+                              <TextField
+                                {...field}
+                                id="name"
+                                value={field.value}
+                                error={errors?.title ? true : false}
+                                onChange={(value) => {
+                                  field.onChange(value);
+                                }}
+                                InputLabelProps={{ shrink: true }}
+                              />
+                            </FormItem>
                           </>
                         )}
                       />
@@ -228,30 +239,27 @@ const ModalAddTargetCompany = ({ isOpen, handleSuccess, handleClose }) => {
                         name={"periodId"}
                         render={({ field }) => (
                           <>
-                            <InputLabel id="demo-simple-period" style={{ paddingBottom: "3px", paddingLeft: "10px" }}>
-                              Period
-                            </InputLabel>
-
-                            <Select
-                              labelId="demo-simple-period"
-                              value={field.value ?? ""}
-                              size="small"
-                              label="Period"
-                              onChange={(e) => {
-                                field.onChange(e.target.value);
-                              }}
-                              displayEmpty
-                            >
-                              {userOptions.map((item) => (
-                                <MenuItem
-                                  value={item.value}
-                                  key={item.value}
-                                  style={{ display: "block", padding: "8px" }}
-                                >
-                                  {item.label}
-                                </MenuItem>
-                              ))}
-                            </Select>
+                            <FormItem label="Period">
+                              <Select
+                                labelId="demo-simple-period"
+                                value={field.value ?? ""}
+                                size="small"
+                                onChange={(e) => {
+                                  field.onChange(e.target.value);
+                                }}
+                                displayEmpty
+                              >
+                                {userOptions.map((item) => (
+                                  <MenuItem
+                                    value={item.value}
+                                    key={item.value}
+                                    style={{ display: "block", padding: "8px" }}
+                                  >
+                                    {item.label}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormItem>
                           </>
                         )}
                       />
@@ -268,19 +276,20 @@ const ModalAddTargetCompany = ({ isOpen, handleSuccess, handleClose }) => {
                         name={"progress"}
                         render={({ field }) => (
                           <>
-                            <TextField
-                              {...field}
-                              id="progress"
-                              type="number"
-                              InputProps={{ inputProps: { min: 0, max: 100 } }}
-                              value={field.value}
-                              error={errors?.title ? true : false}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                methods.setValue(`progress`, value ? parseInt(value) : "");
-                              }}
-                              label="Progress"
-                            />
+                            <FormItem label="Progress">
+                              <TextField
+                                {...field}
+                                id="progress"
+                                type="number"
+                                InputProps={{ inputProps: { min: 0, max: 100 } }}
+                                value={field.value}
+                                error={errors?.title ? true : false}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  methods.setValue(`progress`, value ? parseInt(value) : "");
+                                }}
+                              />
+                            </FormItem>
                           </>
                         )}
                       />
@@ -296,25 +305,26 @@ const ModalAddTargetCompany = ({ isOpen, handleSuccess, handleClose }) => {
                         name={"fromDate"}
                         render={({ field }) => (
                           <>
-                            <TextField
-                              {...field}
-                              id="date"
-                              label="From Date"
-                              type="date"
-                              value={field.value}
-                              inputProps={{
-                                max:  methods.watch("toDate")
-                                  ? dayjs(methods.watch("toDate")).endOf("d").format("YYYY-MM-DD")
-                                  : null,
-                              }}
-                              error={errors?.title ? true : false}
-                              onChange={(value) => {
-                                field.onChange(value);
-                              }}
-                              InputLabelProps={{
-                                shrink: true,
-                              }}
-                            />
+                            <FormItem label="From Date">
+                              <TextField
+                                {...field}
+                                id="date"
+                                type="date"
+                                value={field.value}
+                                inputProps={{
+                                  max: methods.watch("toDate")
+                                    ? dayjs(methods.watch("toDate")).endOf("d").format("YYYY-MM-DD")
+                                    : null,
+                                }}
+                                error={errors?.title ? true : false}
+                                onChange={(value) => {
+                                  field.onChange(value);
+                                }}
+                                InputLabelProps={{
+                                  shrink: true,
+                                }}
+                              />
+                            </FormItem>
                           </>
                         )}
                       />
@@ -330,23 +340,24 @@ const ModalAddTargetCompany = ({ isOpen, handleSuccess, handleClose }) => {
                         name={"toDate"}
                         render={({ field }) => (
                           <>
-                            <TextField
-                              {...field}
-                              id="date"
-                              label="To Date"
-                              type="date"
-                              inputProps={{
-                                min:  dayjs(methods.watch("fromDate")).format("YYYY-MM-DD"),
-                              }}
-                              value={field.value}
-                              error={errors?.title ? true : false}
-                              onChange={(value) => {
-                                field.onChange(value);
-                              }}
-                              InputLabelProps={{
-                                shrink: true,
-                              }}
-                            />
+                            <FormItem label="To Date">
+                              <TextField
+                                {...field}
+                                id="date"
+                                type="date"
+                                inputProps={{
+                                  min: dayjs(methods.watch("fromDate")).format("YYYY-MM-DD"),
+                                }}
+                                value={field.value}
+                                error={errors?.title ? true : false}
+                                onChange={(value) => {
+                                  field.onChange(value);
+                                }}
+                                InputLabelProps={{
+                                  shrink: true,
+                                }}
+                              />
+                            </FormItem>
                           </>
                         )}
                       />
@@ -363,28 +374,26 @@ const ModalAddTargetCompany = ({ isOpen, handleSuccess, handleClose }) => {
                         name={"status"}
                         render={({ field }) => (
                           <>
-                            <InputLabel id="demo-simple-select" style={{ paddingBottom: "3px", paddingLeft: "10px" }}>
-                              Status
-                            </InputLabel>
+                            <FormItem label="Status">
+                              <Select
+                                labelId="demo-simple-select"
+                                id="status"
+                                value={field.value ?? ""}
+                                // readOnly
 
-                            <Select
-                              labelId="demo-simple-select"
-                              id="status"
-                              value={field.value ?? ""}
-                              // readOnly
-                              label="Status"
-                              onChange={(e) => {
-                                field.onChange(e.target.value);
-                              }}
-                              displayEmpty
-                              style={{ padding: "5px 0 0 10px" }}
-                            >
-                              {TARGET_STATUS.map((item) => (
-                                <MenuItem value={item} key={item} style={{ display: "block", padding: "8px" }}>
-                                  {item}
-                                </MenuItem>
-                              ))}
-                            </Select>
+                                onChange={(e) => {
+                                  field.onChange(e.target.value);
+                                }}
+                                displayEmpty
+                                style={{ padding: "5px 0 0 10px" }}
+                              >
+                                {TARGET_STATUS.map((item) => (
+                                  <MenuItem value={item} key={item} style={{ display: "block", padding: "8px" }}>
+                                    {capitalizeWords(item)}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormItem>
                           </>
                         )}
                       />
@@ -399,27 +408,24 @@ const ModalAddTargetCompany = ({ isOpen, handleSuccess, handleClose }) => {
                         name={"type"}
                         render={({ field }) => (
                           <>
-                            <InputLabel id="select-type" style={{ paddingBottom: "3px", paddingLeft: "10px" }}>
-                              Type
-                            </InputLabel>
-
-                            <Select
-                              labelId="select-type"
-                              value={"COMPANY"}
-                              readOnly
-                              label="Type"
-                              onChange={(e) => {
-                                field.onChange(e.target.value);
-                              }}
-                              displayEmpty
-                              style={{ padding: "5px 0 0 10px" }}
-                            >
-                              {TARGET_TYPE.map((item) => (
-                                <MenuItem value={item} key={item} style={{ display: "block", padding: "8px" }}>
-                                  {item}
-                                </MenuItem>
-                              ))}
-                            </Select>
+                            <FormItem label="Type">
+                              <Select
+                                labelId="select-type"
+                                value={"COMPANY"}
+                                readOnly
+                                onChange={(e) => {
+                                  field.onChange(e.target.value);
+                                }}
+                                displayEmpty
+                                style={{ padding: "5px 0 0 10px" }}
+                              >
+                                {TARGET_TYPE.map((item) => (
+                                  <MenuItem value={item} key={item} style={{ display: "block", padding: "8px" }}>
+                                    {capitalizeWords(item)}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormItem>
                           </>
                         )}
                       />
@@ -434,30 +440,27 @@ const ModalAddTargetCompany = ({ isOpen, handleSuccess, handleClose }) => {
                         name={"targetCategoryId"}
                         render={({ field }) => (
                           <>
-                            <InputLabel id="select-cate" style={{ paddingBottom: "3px", paddingLeft: "10px" }}>
-                              Category
-                            </InputLabel>
-
-                            <Select
-                              labelId="select-cate"
-                              value={field.value ?? ""}
-                              label="Target Category"
-                              onChange={(e) => {
-                                field.onChange(e.target.value);
-                              }}
-                              displayEmpty
-                              style={{ padding: "5px 0 0 10px" }}
-                            >
-                              {categoryOptions.map((item) => (
-                                <MenuItem
-                                  value={item.value}
-                                  key={item.value}
-                                  style={{ display: "block", padding: "8px" }}
-                                >
-                                  {item.label}
-                                </MenuItem>
-                              ))}
-                            </Select>
+                            <FormItem label="Category">
+                              <Select
+                                labelId="select-cate"
+                                value={field.value ?? ""}
+                                onChange={(e) => {
+                                  field.onChange(e.target.value);
+                                }}
+                                displayEmpty
+                                style={{ padding: "5px 0 0 10px" }}
+                              >
+                                {categoryOptions.map((item) => (
+                                  <MenuItem
+                                    value={item.value}
+                                    key={item.value}
+                                    style={{ display: "block", padding: "8px" }}
+                                  >
+                                    {capitalizeWords(item.label)}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormItem>
                           </>
                         )}
                       />
@@ -520,7 +523,34 @@ const ModalAddTargetCompany = ({ isOpen, handleSuccess, handleClose }) => {
                             </Box>
                           </CardContent>
                         </Grid>
-                        <Grid item xs={8}></Grid>
+                        <Grid item xs={4}>
+                          <CardContent>
+                            <Box display="flex" flexDirection="column" justifyContent="center">
+                              <Controller
+                                control={control}
+                                name={`keyResults.${index}.weighted`}
+                                render={({ field }) => (
+                                  <>
+                                    <TextField
+                                      {...field}
+                                      type="number"
+                                      InputProps={{ inputProps: { min: 0, max: 100 } }}
+                                      value={field.value}
+                                      error={errors?.title ? true : false}
+                                      onChange={(e) => {
+                                        const value = e.target.value;
+                                        console.log(value);
+                                        methods.setValue(`keyResults.${index}.weighted`, value ? parseInt(value) : "");
+                                      }}
+                                      label="Weighted"
+                                    />
+                                  </>
+                                )}
+                              />
+                            </Box>
+                          </CardContent>
+                        </Grid>
+                        <Grid item xs={4}></Grid>
                         <Grid item xs={4}>
                           <CardContent>
                             <Box display="flex" flexDirection="column" justifyContent="center">
@@ -585,6 +615,7 @@ const ModalAddTargetCompany = ({ isOpen, handleSuccess, handleClose }) => {
                             onClick={() => {
                               remove(index);
                             }}
+                            style={{ textTransform: "none" }}
                           >
                             Remove key result
                           </Button>
@@ -599,16 +630,24 @@ const ModalAddTargetCompany = ({ isOpen, handleSuccess, handleClose }) => {
                 </Grid>
               </Grid>
               <CardActions className={classes.action}>
-                <Button type="button" variant="contained" color="default">
+                <Button
+                  type="button"
+                  variant="contained"
+                  color="default"
+                  style={{ textTransform: "none" }}
+                  onClick={handleClose}
+                >
                   Cancel
                 </Button>
-                <Button type="submit" variant="contained" color="primary">
+
+                <Button type="submit" variant="contained" color="primary" style={{ textTransform: "none" }}>
                   Add
                 </Button>
                 <Button
                   type="button"
                   variant="contained"
                   color="primary"
+                  style={{ textTransform: "none" }}
                   onClick={() => {
                     append({
                       title: "",

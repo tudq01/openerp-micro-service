@@ -39,6 +39,9 @@ public class KeyResultImpl implements KeyResultService {
         if (newEntity.getToDate() != null) {
             target.setToDate(newEntity.getToDate());
         }
+        if (newEntity.getWeighted() != null) {
+            target.setWeighted(newEntity.getWeighted());
+        }
 
         return keyResultRepo.save(target);
 
@@ -51,7 +54,7 @@ public class KeyResultImpl implements KeyResultService {
 
     @Override
     public void deleteById(Long id) {
-       keyResultRepo.deleteById(id);
+        keyResultRepo.deleteById(id);
     }
 
 }

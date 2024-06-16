@@ -1,25 +1,21 @@
 import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
+
 import { Button, IconButton } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "api";
 import ModalAddEmploy from "components/modal/ModalAddEmploy";
 import { StandardTable } from "erp-hust/lib/StandardTable";
 import { useState } from "react";
-import { useHistory, useParams } from "react-router-dom/cjs/react-router-dom";
+import { useHistory } from "react-router-dom/cjs/react-router-dom";
 import { errorNoti, successNoti } from "utils/notification";
 
 // admin can add all
 // manager add one
 const UserManagerScreen = () => {
   const [filterParams, setFilterParams] = useState({ page: 0, size: 5 });
-  const [detailId, setDetail] = useState();
+
   const queryClient = useQueryClient();
   const history = useHistory();
-
-  const router = useParams();
-
-  const name = router.name;
 
   const [openModalAddHall, setOpenModalAddHall] = useState(false);
   const handleCloseModal = () => {
@@ -33,7 +29,7 @@ const UserManagerScreen = () => {
       //   setTarget(res);
       // };
       let errorHandlers = {
-        onError: (error) => errorNoti("Đã xảy ra lỗi trong khi tải dữ liệu!", 3000),
+        onError: () => errorNoti("Error loading data", 3000),
       };
 
       const res = await request("GET", `/users/manager`, null, errorHandlers, null, { params: filterParams });
@@ -53,17 +49,6 @@ const UserManagerScreen = () => {
     request("DELETE", `/users/manager/${deletedId}`, successHandler, errorHandlers);
   }
 
-  const updateTeam = (deletedId, value) => {
-    let successHandler = () => {
-      successNoti("Update successfully");
-      queryClient.invalidateQueries(["user-manager"]);
-    };
-    let errorHandlers = {
-      onError: () => errorNoti("Đã xảy ra lỗi "),
-    };
-    request("patch", `/teams/members/${deletedId}`, successHandler, errorHandlers, value);
-  };
-
   const columns = [
     { title: "Name", editable: "never", render: (row) => <>{`${row?.user?.firstName} ${row?.user?.lastName}`}</> },
     {
@@ -77,7 +62,7 @@ const UserManagerScreen = () => {
       editable: "never",
       render: (contest) => (
         <>
-          <IconButton
+          {/* <IconButton
             variant="contained"
             color="success"
             onClick={() => {
@@ -85,7 +70,7 @@ const UserManagerScreen = () => {
             }}
           >
             <EditIcon />
-          </IconButton>
+          </IconButton> */}
 
           <IconButton
             variant="contained"
@@ -126,8 +111,9 @@ const UserManagerScreen = () => {
                     setOpenModalAddHall(true);
                   }}
                   color="primary"
+                  style={{ textTransform: "none" }}
                 >
-                  Add member
+                  Add Member
                 </Button>
               );
             },

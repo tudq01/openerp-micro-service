@@ -17,9 +17,10 @@ public class CreateTargetRequest {
     String status;
     String type;
     Long periodId;
+    Long parentId;
 
     String userId;
-    // String reviewerId;
+    String keyResultId;
     Integer targetCategoryId;
 
     ArrayList<CreateOkrRequest> keyResults;

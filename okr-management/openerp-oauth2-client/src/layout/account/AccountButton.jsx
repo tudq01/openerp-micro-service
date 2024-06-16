@@ -1,10 +1,10 @@
 import { useState } from "@hookstate/core";
 import { Avatar, IconButton } from "@mui/material";
 import { useKeycloak } from "@react-keycloak/web";
-import randomColor from "randomcolor";
+
 import React, { useEffect } from "react";
 import { AccountMenu } from "./AccountMenu";
-
+import randomColor from "randomcolor";
 const bgColor = randomColor({
   luminosity: "dark",
   hue: "random",
@@ -33,7 +33,7 @@ function AccountButton() {
     }
 
     prevOpen.current = open.get();
-  }, [open.get()]);
+  }, [open]);
 
   return (
     <>

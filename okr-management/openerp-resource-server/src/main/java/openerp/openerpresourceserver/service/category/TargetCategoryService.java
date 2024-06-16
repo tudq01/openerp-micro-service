@@ -1,11 +1,13 @@
 package openerp.openerpresourceserver.service.category;
 
-import java.util.List;
+import java.util.Map;
 
 import openerp.openerpresourceserver.entity.TargetCategory;
 
 public interface TargetCategoryService {
-    List<TargetCategory> findAll();
+
+    Map<String, Object> findAll(String keyword, int page,
+            int size);
 
     void create(TargetCategory newEntity);
 

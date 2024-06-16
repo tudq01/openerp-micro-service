@@ -11,10 +11,10 @@ import { ReactComponent as Logo } from "assets/icons/logo.svg";
 import bgImage from "assets/img/sidebar-2.webp";
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { useHistory } from "react-router-dom/cjs/react-router-dom";
 import AccountButton from "./account/AccountButton";
 import NotificationButton from "./notification/NotificationButton";
 import SideBar, { drawerWidth } from "./sidebar/SideBar";
-
 /**
  * https://mui.com/material-ui/react-app-bar/#fixed-placement
  */
@@ -89,7 +89,7 @@ function Layout({ children }) {
 
   //
   const { keycloak } = useKeycloak();
-
+  const history = useHistory();
   //
   const [open, setOpen] = React.useState(true);
   const [image] = useState(bgImage);
@@ -116,7 +116,15 @@ function Layout({ children }) {
             <Logo width={20} height={20} x={2} y={2} />
           </SvgIcon>
 
-          <Typography sx={styles.appName} variant="h6" noWrap>
+          <Typography
+            sx={styles.appName}
+            variant="h6"
+            className="cursor-pointer"
+            noWrap
+            onClick={() => {
+              history.push(`/`);
+            }}
+          >
             Open ERP
           </Typography>
 

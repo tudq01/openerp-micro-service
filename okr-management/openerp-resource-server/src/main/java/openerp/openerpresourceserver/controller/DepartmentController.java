@@ -85,14 +85,21 @@ public class DepartmentController {
 
     @GetMapping("/teams/members")
     public ResponseEntity<Map<String, Object>> getAllTeamMember(Principal principal,
+            @RequestParam(defaultValue = "0") int teamId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         String userId = principal.getName();
+
         TeamMember teamMember = teamMemberRepo.findByUserId(userId);
+        Long team = teamMember.getTeamId();
+        if (teamId != 0) {
+            team = (long) teamId;
+        }
 
         // handle no data
 
-        return ResponseEntity.ok().body(departmentMemberService.findByDepartment(teamMember.getTeamId(), page, size));
+        return ResponseEntity.ok()
+                .body(departmentMemberService.findByDepartment(team, page, size));
     }
 
     @GetMapping("/teams/me")

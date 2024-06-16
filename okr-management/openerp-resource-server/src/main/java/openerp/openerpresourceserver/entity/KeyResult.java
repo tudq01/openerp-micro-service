@@ -35,6 +35,7 @@ public class KeyResult {
         this.progress = keyResult.getProgress();
         this.fromDate = keyResult.getFromDate();
         this.toDate = keyResult.getToDate();
+        this.weighted= keyResult.getWeighted();
     }
 
     @Id
@@ -43,6 +44,7 @@ public class KeyResult {
 
     private String title;
     private Integer progress;
+     private Integer weighted;
     private Date fromDate;
     private Date toDate;
     @Column(name = "target_id")

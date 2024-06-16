@@ -1,5 +1,5 @@
 import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
+
 import { Button, IconButton } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "api";
@@ -14,7 +14,7 @@ import { Link as RouterLink } from "react-router-dom";
 
 const DepartmentScreen = () => {
   const [filterParams, setFilterParams] = useState({ page: 0, size: 5 });
-  const [detailId, setDetail] = useState();
+
   const queryClient = useQueryClient();
   const history = useHistory();
 
@@ -30,7 +30,7 @@ const DepartmentScreen = () => {
       //   setTarget(res);
       // };
       let errorHandlers = {
-        onError: (error) => errorNoti("Đã xảy ra lỗi trong khi tải dữ liệu!", 3000),
+        onError: (error) => errorNoti("Error loading data", 3000),
       };
 
       const res = await request("GET", `/departments`, null, errorHandlers, null, { params: filterParams });
@@ -42,7 +42,7 @@ const DepartmentScreen = () => {
   function deleteHall(deletedId) {
     let successHandler = () => {
       successNoti("Delete successfully");
-      queryClient.invalidateQueries(["user-targets"]);
+      queryClient.invalidateQueries(["departments"]);
       // const item = halls.content.filter((item) => item.id !== deletedPermission);
 
       // setHall({
@@ -59,7 +59,7 @@ const DepartmentScreen = () => {
   const updateDepartment = (deletedId, value) => {
     let successHandler = () => {
       successNoti("Update successfully");
-      queryClient.invalidateQueries(["user-targets"]);
+      queryClient.invalidateQueries(["departments"]);
     };
     let errorHandlers = {
       onError: () => errorNoti("Đã xảy ra lỗi "),
@@ -84,7 +84,7 @@ const DepartmentScreen = () => {
       editable: "never",
       render: (contest) => (
         <>
-          <IconButton
+          {/* <IconButton
             variant="contained"
             color="success"
             onClick={() => {
@@ -92,7 +92,7 @@ const DepartmentScreen = () => {
             }}
           >
             <EditIcon />
-          </IconButton>
+          </IconButton> */}
 
           <IconButton
             variant="contained"
@@ -133,8 +133,9 @@ const DepartmentScreen = () => {
                     setOpenModalAddHall(true);
                   }}
                   color="primary"
+                  style={{ textTransform: "none" }}
                 >
-                  Add department
+                  Add Department
                 </Button>
               );
             },
@@ -149,7 +150,6 @@ const DepartmentScreen = () => {
         cellEditable={{
           onCellEditApproved: (newValue, oldValue, rowData, columnDef) => {
             return new Promise((resolve, reject) => {
-             
               const submitData = { name: newValue };
               updateDepartment(rowData.id, submitData);
               setTimeout(resolve, 1000);

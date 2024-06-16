@@ -23,7 +23,7 @@ const useStyles = makeStyles((theme) => ({
   card: {
     minWidth: 400,
     padding: 10,
-    width: "100vw",
+    // width: "100vw",
     height: "100vh",
     overflowY: "scroll",
   },
@@ -77,7 +77,7 @@ const PeriodDetailScreen = ({ isOpen, handleSuccess }) => {
     };
 
     let errorHandlers = {
-      onError: (error) => errorNoti("Error update!", 3000),
+      onError: (error) => errorNoti(error?.response?.data, 3000),
     };
 
     request("patch", `/targets/period/${id}`, successHandler, errorHandlers, values);
@@ -223,12 +223,13 @@ const PeriodDetailScreen = ({ isOpen, handleSuccess }) => {
               variant="contained"
               color="default"
               onClick={() => {
-                methods.reset();
+                history.goBack();
               }}
+              style={{ textTransform: "none" }}
             >
               Cancel
             </Button>
-            <Button type="submit" variant="contained" color="primary">
+            <Button type="submit" variant="contained" color="primary" style={{ textTransform: "none" }}>
               Update
             </Button>
           </CardActions>

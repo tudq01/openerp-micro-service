@@ -73,7 +73,7 @@ const ModalAddPeriod = ({ isOpen, handleSuccess, handleClose }) => {
     };
 
     let errorHandlers = {
-      onError: (error) => errorNoti("Error create!", 3000),
+      onError: (error) => errorNoti(error?.response?.data, 3000),
     };
 
     request("post", `/targets/period`, successHandler, errorHandlers, values);
@@ -201,10 +201,16 @@ const ModalAddPeriod = ({ isOpen, handleSuccess, handleClose }) => {
                 <Grid item xs={4}></Grid>
               </Grid>
               <CardActions className={classes.action}>
-                <Button type="button" variant="contained" color="default">
+                <Button
+                  type="button"
+                  variant="contained"
+                  color="default"
+                  onClick={handleClose}
+                  style={{ textTransform: "none" }}
+                >
                   Cancel
                 </Button>
-                <Button type="submit" variant="contained" color="primary">
+                <Button type="submit" variant="contained" color="primary" style={{ textTransform: "none" }}>
                   Add
                 </Button>
               </CardActions>

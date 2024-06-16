@@ -14,16 +14,21 @@ import Grid from "@material-ui/core/Grid";
 import { makeStyles } from "@material-ui/core/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import { IconButton } from "@mui/material";
-import InputLabel from "@mui/material/InputLabel";
+
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import ClearIcon from "@mui/icons-material/Clear";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "api";
+import FormItem from "components/form/FormItem";
 import dayjs from "dayjs";
+import { capitalize } from "lodash";
+import { useState } from "react";
 import { Controller, FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { errorNoti, successNoti } from "utils/notification";
+import { capitalizeWords } from "views/target/TargetScreen";
 import * as z from "zod";
 
 const useStyles = makeStyles((theme) => ({
@@ -79,6 +84,7 @@ const ModalAddTarget = ({ isOpen, handleSuccess, handleClose }) => {
         status: z.string().optional().nullable(),
         type: z.string().optional().nullable(),
         targetCategoryId: z.number().optional().nullable(),
+        parentId: z.number().optional().nullable(),
         periodId: z.number({
           required_error: "This field is required",
           invalid_type_error: "This field is required",
@@ -91,6 +97,10 @@ const ModalAddTarget = ({ isOpen, handleSuccess, handleClose }) => {
                 .min(1, { message: "This field is required" }),
               // progress: z.string().optional().nullable(),
               progress: z.number({
+                required_error: "This field is required",
+                invalid_type_error: "This field is required",
+              }),
+              weighted: z.number({
                 required_error: "This field is required",
                 invalid_type_error: "This field is required",
               }),
@@ -111,8 +121,8 @@ const ModalAddTarget = ({ isOpen, handleSuccess, handleClose }) => {
   const { data: categories } = useQuery({
     queryKey: ["target-category"],
     queryFn: async () => {
-      const res = await request("GET", `/targets/categories`, null, null, null, {});
-      return res.data;
+      const res = await request("GET", `/targets/categories`, null, null, null, { page: 0, size: 20 });
+      return res.data?.categories || [];
     },
     enabled: true,
   });
@@ -132,7 +142,13 @@ const ModalAddTarget = ({ isOpen, handleSuccess, handleClose }) => {
 
   const { append, remove } = useFieldArray({ control, name: "keyResults" });
 
+  //todo: create chua align target
   const save = async (values) => {
+    // const weight = values.keyResults.reduce((acc, item) => acc + item.weighted, 0);
+    // if (weight !== 100 && values.keyResults.length > 0) {
+    //   errorNoti("Weight must sum up to 100!", 3000);
+    //   return;
+    // }
     let successHandler = (res) => {
       queryClient.invalidateQueries(["user-targets"]);
       successNoti("Add target successfully!", 3000);
@@ -141,7 +157,7 @@ const ModalAddTarget = ({ isOpen, handleSuccess, handleClose }) => {
     };
 
     let errorHandlers = {
-      onError: (error) => errorNoti("Error create!", 3000),
+      onError: (error) => errorNoti(error?.response?.data, 3000),
     };
 
     request("post", `/targets`, successHandler, errorHandlers, values);
@@ -151,7 +167,7 @@ const ModalAddTarget = ({ isOpen, handleSuccess, handleClose }) => {
     queryKey: ["target-period-select"],
     queryFn: async () => {
       let errorHandlers = {
-        onError: (error) => errorNoti("Đã xảy ra lỗi trong khi tải dữ liệu!", 3000),
+        onError: (error) => errorNoti("Error loading data", 3000),
       };
 
       const res = await request("GET", `/targets/period`, null, errorHandlers, null, {
@@ -168,13 +184,47 @@ const ModalAddTarget = ({ isOpen, handleSuccess, handleClose }) => {
       })
     : [];
 
+  const [keyword, setKeyword] = useState(null);
+  const { data: parentTarget } = useQuery({
+    queryKey: ["user-targets-teams-member", keyword, methods.watch("periodId")],
+    queryFn: async () => {
+      // let successHandler = (res) => {
+      //   setTarget(res);
+      // };
+      let errorHandlers = {
+        onError: (error) => errorNoti("Error loading data", 3000),
+      };
+
+      const res = await request("GET", `/teams/me`, null, errorHandlers, null, {});
+      if (!res.data?.teamId || !methods.watch("periodId")) return [];
+
+      const teams = await request("GET", `/targets/team`, null, errorHandlers, null, {
+        params: {
+          periodId: methods.watch("periodId"),
+          keyword: keyword,
+          page: 0,
+          size: 5,
+          teamId: res.data.teamId,
+          type: "DEPARTMENT",
+        },
+      });
+      return teams.data.targets;
+    },
+    enabled: !!methods.watch("periodId"),
+  });
+
+  const parentOptions = parentTarget?.length
+    ? parentTarget.map((item) => {
+        return { label: item.title, value: item.id };
+      })
+    : [];
+
   return (
     <Modal
       className={classes.modal}
       open={isOpen}
       onClose={handleClose}
       closeAfterTransition
-      // BackdropComponent={Backdrop}
       BackdropProps={{
         timeout: 500,
       }}
@@ -197,93 +247,138 @@ const ModalAddTarget = ({ isOpen, handleSuccess, handleClose }) => {
                 <Grid item xs={4}>
                   <CardContent>
                     <Box display="flex" flexDirection="column" justifyContent="center" aria-label="Room">
-                      <Controller
-                        control={control}
-                        name={"title"}
-                        render={({ field }) => (
-                          <>
-                            <TextField
-                              {...field}
-                              id="name"
-                              value={field.value}
-                              error={errors?.title ? true : false}
-                              onChange={(value) => {
-                                field.onChange(value);
-                              }}
-                              label="Title"
-                              InputLabelProps={{ shrink: true }}
-                            />
-                          </>
-                        )}
-                      />
-                      <div>{errors?.title?.message}</div>
+                      <FormItem label="Title">
+                        <Controller
+                          control={control}
+                          name={"title"}
+                          render={({ field }) => (
+                            <>
+                              <TextField
+                                {...field}
+                                id="name"
+                                value={field.value}
+                                error={errors?.title ? true : false}
+                                onChange={(value) => {
+                                  field.onChange(value);
+                                }}
+                                InputLabelProps={{ shrink: true }}
+                              />
+                            </>
+                          )}
+                        />
+                        <div>{errors?.title?.message}</div>
+                      </FormItem>
                     </Box>
                   </CardContent>
                 </Grid>
                 <Grid item xs={4}>
                   <CardContent>
                     <Box display="flex" flexDirection="column" justifyContent="center">
-                      <Controller
-                        control={control}
-                        name={"periodId"}
-                        render={({ field }) => (
-                          <>
-                            <InputLabel id="demo-simple-period" style={{ paddingBottom: "3px", paddingLeft: "10px" }}>
-                              Period
-                            </InputLabel>
-
-                            <Select
-                              labelId="demo-simple-period"
-                              value={field.value ?? ""}
-                              size="small"
-                              label="Period"
-                              onChange={(e) => {
-                                field.onChange(e.target.value);
-                              }}
-                              displayEmpty
-                            >
-                              {userOptions.map((item) => (
-                                <MenuItem
-                                  value={item.value}
-                                  key={item.value}
-                                  style={{ display: "block", padding: "8px" }}
-                                >
-                                  {item.label}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </>
-                        )}
-                      />
-                      <div>{errors?.periodId?.message}</div>
+                      <FormItem label="Period">
+                        <Controller
+                          control={control}
+                          name={"periodId"}
+                          render={({ field }) => (
+                            <>
+                              <Select
+                                labelId="demo-simple-period"
+                                value={field.value ?? ""}
+                                size="small"
+                                onChange={(e) => {
+                                  field.onChange(e.target.value);
+                                }}
+                                displayEmpty
+                              >
+                                {userOptions.map((item) => (
+                                  <MenuItem
+                                    value={item.value}
+                                    key={item.value}
+                                    style={{ display: "block", padding: "8px" }}
+                                  >
+                                    {item.label}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </>
+                          )}
+                        />
+                        <div>{errors?.periodId?.message}</div>
+                      </FormItem>
                     </Box>
                   </CardContent>
                 </Grid>
-                <Grid item xs={4}></Grid>
                 <Grid item xs={4}>
                   <CardContent>
                     <Box display="flex" flexDirection="column" justifyContent="center">
-                      <Controller
-                        control={control}
-                        name={"progress"}
-                        render={({ field }) => (
-                          <>
-                            <TextField
-                              {...field}
-                              id="progress"
-                              type="number"
-                              InputProps={{ inputProps: { min: 0, max: 100 } }}
-                              value={field.value}
-                              error={errors?.title ? true : false}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                methods.setValue(`progress`, value ? parseInt(value) : "");
-                              }}
-                              label="Progress"
-                            />
-                          </>
-                        )}
-                      />
+                      <FormItem label="Align Target">
+                        <Controller
+                          control={control}
+                          name={"parentId"}
+                          render={({ field }) => (
+                            <>
+                              <Select
+                                labelId="parent"
+                                value={field.value ?? ""}
+                                size="small"
+                                endAdornment={
+                                  <IconButton
+                                    className="mr-6"
+                                    size="small"
+                                    onClick={() => {
+                                      methods.setValue("parentId", null);
+                                    }}
+                                  >
+                                    <ClearIcon fontSize="small" />
+                                  </IconButton>
+                                }
+                                onChange={(e) => {
+                                  field.onChange(e.target.value);
+                                }}
+                                displayEmpty
+                              >
+                                {parentOptions.map((item) => (
+                                  <MenuItem
+                                    value={item.value}
+                                    key={item.value}
+                                    style={{ display: "block", padding: "8px" }}
+                                  >
+                                    {item.label}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </>
+                          )}
+                        />
+                        <div>{errors?.parentId?.message}</div>
+                      </FormItem>
+                    </Box>
+                  </CardContent>
+                </Grid>
+                <Grid item xs={4}>
+                  <CardContent>
+                    <Box display="flex" flexDirection="column" justifyContent="center">
+                      <FormItem label="Progress">
+                        <Controller
+                          control={control}
+                          name={"progress"}
+                          render={({ field }) => (
+                            <>
+                              <TextField
+                                {...field}
+                                id="progress"
+                                type="number"
+                                InputProps={{ inputProps: { min: 0, max: 100 } }}
+                                value={field.value}
+                                error={errors?.title ? true : false}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  methods.setValue(`progress`, value ? parseInt(value) : "");
+                                }}
+                              />
+                            </>
+                          )}
+                        />
+                      </FormItem>
                     </Box>
                   </CardContent>
                 </Grid>
@@ -291,33 +386,34 @@ const ModalAddTarget = ({ isOpen, handleSuccess, handleClose }) => {
                 <Grid item xs={4}>
                   <CardContent>
                     <Box display="flex" flexDirection="column" justifyContent="center">
-                      <Controller
-                        control={control}
-                        name={"fromDate"}
-                        render={({ field }) => (
-                          <>
-                            <TextField
-                              {...field}
-                              id="date"
-                              label="From Date"
-                              type="date"
-                              value={field.value}
-                              inputProps={{
-                                max: methods.watch("toDate")
-                                  ? dayjs(methods.watch("toDate")).endOf("d").format("YYYY-MM-DD")
-                                  : null,
-                              }}
-                              error={errors?.title ? true : false}
-                              onChange={(value) => {
-                                field.onChange(value);
-                              }}
-                              InputLabelProps={{
-                                shrink: true,
-                              }}
-                            />
-                          </>
-                        )}
-                      />
+                      <FormItem label="From Date">
+                        <Controller
+                          control={control}
+                          name={"fromDate"}
+                          render={({ field }) => (
+                            <>
+                              <TextField
+                                {...field}
+                                id="date"
+                                type="date"
+                                value={field.value}
+                                inputProps={{
+                                  max: methods.watch("toDate")
+                                    ? dayjs(methods.watch("toDate")).endOf("d").format("YYYY-MM-DD")
+                                    : null,
+                                }}
+                                error={errors?.title ? true : false}
+                                onChange={(value) => {
+                                  field.onChange(value);
+                                }}
+                                InputLabelProps={{
+                                  shrink: true,
+                                }}
+                              />
+                            </>
+                          )}
+                        />
+                      </FormItem>
                     </Box>
                   </CardContent>
                 </Grid>
@@ -325,31 +421,32 @@ const ModalAddTarget = ({ isOpen, handleSuccess, handleClose }) => {
                 <Grid item xs={4}>
                   <CardContent>
                     <Box display="flex" flexDirection="column" justifyContent="center">
-                      <Controller
-                        control={control}
-                        name={"toDate"}
-                        render={({ field }) => (
-                          <>
-                            <TextField
-                              {...field}
-                              id="date"
-                              label="To Date"
-                              type="date"
-                              inputProps={{
-                                min: dayjs(methods.watch("fromDate")).format("YYYY-MM-DD"),
-                              }}
-                              value={field.value}
-                              error={errors?.title ? true : false}
-                              onChange={(value) => {
-                                field.onChange(value);
-                              }}
-                              InputLabelProps={{
-                                shrink: true,
-                              }}
-                            />
-                          </>
-                        )}
-                      />
+                      <FormItem label="To Date">
+                        <Controller
+                          control={control}
+                          name={"toDate"}
+                          render={({ field }) => (
+                            <>
+                              <TextField
+                                {...field}
+                                id="date"
+                                type="date"
+                                inputProps={{
+                                  min: dayjs(methods.watch("fromDate")).format("YYYY-MM-DD"),
+                                }}
+                                value={field.value}
+                                error={errors?.title ? true : false}
+                                onChange={(value) => {
+                                  field.onChange(value);
+                                }}
+                                InputLabelProps={{
+                                  shrink: true,
+                                }}
+                              />
+                            </>
+                          )}
+                        />
+                      </FormItem>
                     </Box>
                   </CardContent>
                 </Grid>
@@ -358,108 +455,101 @@ const ModalAddTarget = ({ isOpen, handleSuccess, handleClose }) => {
                 <Grid item xs={4}>
                   <CardContent>
                     <Box display="flex" flexDirection="column" justifyContent="center">
-                      <Controller
-                        control={control}
-                        name={"status"}
-                        render={({ field }) => (
-                          <>
-                            <InputLabel id="demo-simple-select" style={{ paddingBottom: "3px", paddingLeft: "10px" }}>
-                              Status
-                            </InputLabel>
+                      <FormItem label="Status">
+                        <Controller
+                          control={control}
+                          name={"status"}
+                          render={({ field }) => (
+                            <>
+                              <Select
+                                labelId="demo-simple-select"
+                                id="status"
+                                size="small"
+                                value={field.value ?? ""}
+                                // readOnly
 
-                            <Select
-                              labelId="demo-simple-select"
-                              id="status"
-                              value={field.value ?? ""}
-                              // readOnly
-                              label="Status"
-                              onChange={(e) => {
-                                field.onChange(e.target.value);
-                              }}
-                              displayEmpty
-                              style={{ padding: "5px 0 0 10px" }}
-                            >
-                              {TARGET_STATUS.map((item) => (
-                                <MenuItem value={item} key={item} style={{ display: "block", padding: "8px" }}>
-                                  {item}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </>
-                        )}
-                      />
+                                onChange={(e) => {
+                                  field.onChange(e.target.value);
+                                }}
+                                displayEmpty
+                                style={{ padding: "5px 0 0 10px" }}
+                              >
+                                {TARGET_STATUS.map((item) => (
+                                  <MenuItem value={item} key={item} style={{ display: "block", padding: "8px" }}>
+                                    {capitalizeWords(item)}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </>
+                          )}
+                        />
+                      </FormItem>
                     </Box>
                   </CardContent>
                 </Grid>
                 <Grid item xs={4}>
                   <CardContent>
                     <Box display="flex" flexDirection="column" justifyContent="center">
-                      <Controller
-                        control={control}
-                        name={"type"}
-                        render={({ field }) => (
-                          <>
-                            <InputLabel id="select-type" style={{ paddingBottom: "3px", paddingLeft: "10px" }}>
-                              Type
-                            </InputLabel>
-
-                            <Select
-                              labelId="select-type"
-                              value={field.value ?? ""}
-                              label="Type"
-                              onChange={(e) => {
-                                field.onChange(e.target.value);
-                              }}
-                              displayEmpty
-                              style={{ padding: "5px 0 0 10px" }}
-                            >
-                              {TARGET_TYPE.map((item) => (
-                                <MenuItem value={item} key={item} style={{ display: "block", padding: "8px" }}>
-                                  {item}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </>
-                        )}
-                      />
+                      <FormItem label="Type">
+                        <Controller
+                          control={control}
+                          name={"type"}
+                          render={({ field }) => (
+                            <>
+                              <Select
+                                labelId="select-type"
+                                value={field.value ?? ""}
+                                onChange={(e) => {
+                                  field.onChange(e.target.value);
+                                }}
+                                displayEmpty
+                                style={{ padding: "5px 0 0 10px" }}
+                              >
+                                {TARGET_TYPE.map((item) => (
+                                  <MenuItem value={item} key={item} style={{ display: "block", padding: "8px" }}>
+                                    {capitalize(item)}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </>
+                          )}
+                        />
+                      </FormItem>
                     </Box>
                   </CardContent>
                 </Grid>
                 <Grid item xs={4}>
                   <CardContent>
                     <Box display="flex" flexDirection="column" justifyContent="center">
-                      <Controller
-                        control={control}
-                        name={"targetCategoryId"}
-                        render={({ field }) => (
-                          <>
-                            <InputLabel id="select-cate" style={{ paddingBottom: "3px", paddingLeft: "10px" }}>
-                              Category
-                            </InputLabel>
-
-                            <Select
-                              labelId="select-cate"
-                              value={field.value ?? ""}
-                              label="Target Category"
-                              onChange={(e) => {
-                                field.onChange(e.target.value);
-                              }}
-                              displayEmpty
-                              style={{ padding: "5px 0 0 10px" }}
-                            >
-                              {categoryOptions.map((item) => (
-                                <MenuItem
-                                  value={item.value}
-                                  key={item.value}
-                                  style={{ display: "block", padding: "8px" }}
-                                >
-                                  {item.label}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </>
-                        )}
-                      />
+                      <FormItem label="Category">
+                        <Controller
+                          control={control}
+                          name={"targetCategoryId"}
+                          render={({ field }) => (
+                            <>
+                              <Select
+                                labelId="select-cate"
+                                value={field.value ?? ""}
+                                onChange={(e) => {
+                                  field.onChange(e.target.value);
+                                }}
+                                displayEmpty
+                                style={{ padding: "5px 0 0 10px" }}
+                              >
+                                {categoryOptions.map((item) => (
+                                  <MenuItem
+                                    value={item.value}
+                                    key={item.value}
+                                    style={{ display: "block", padding: "8px" }}
+                                  >
+                                    {capitalize(item.label)}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </>
+                          )}
+                        />
+                      </FormItem>
                     </Box>
                   </CardContent>
                 </Grid>
@@ -519,7 +609,33 @@ const ModalAddTarget = ({ isOpen, handleSuccess, handleClose }) => {
                             </Box>
                           </CardContent>
                         </Grid>
-                        <Grid item xs={8}></Grid>
+                        <Grid item xs={4}>
+                          <CardContent>
+                            <Box display="flex" flexDirection="column" justifyContent="center">
+                              <Controller
+                                control={control}
+                                name={`keyResults.${index}.weighted`}
+                                render={({ field }) => (
+                                  <>
+                                    <TextField
+                                      {...field}
+                                      type="number"
+                                      InputProps={{ inputProps: { min: 0, max: 100 } }}
+                                      value={field.value}
+                                      error={errors?.title ? true : false}
+                                      onChange={(e) => {
+                                        const value = e.target.value;
+                                        methods.setValue(`keyResults.${index}.weighted`, value ? parseInt(value) : "");
+                                      }}
+                                      label="Weighted"
+                                    />
+                                  </>
+                                )}
+                              />
+                            </Box>
+                          </CardContent>
+                        </Grid>
+                        <Grid item xs={4}></Grid>
                         <Grid item xs={4}>
                           <CardContent>
                             <Box display="flex" flexDirection="column" justifyContent="center">
@@ -580,6 +696,7 @@ const ModalAddTarget = ({ isOpen, handleSuccess, handleClose }) => {
                           <Button
                             type="button"
                             variant="contained"
+                            style={{ textTransform: "none" }}
                             color="primary"
                             onClick={() => {
                               remove(index);
@@ -598,16 +715,24 @@ const ModalAddTarget = ({ isOpen, handleSuccess, handleClose }) => {
                 </Grid>
               </Grid>
               <CardActions className={classes.action}>
-                <Button type="button" variant="contained" color="default">
+                <Button
+                  type="button"
+                  variant="contained"
+                  color="default"
+                  style={{ textTransform: "none" }}
+                  onClick={handleClose}
+                >
                   Cancel
                 </Button>
-                <Button type="submit" variant="contained" color="primary">
+
+                <Button type="submit" variant="contained" color="primary" style={{ textTransform: "none" }}>
                   Add
                 </Button>
                 <Button
                   type="button"
                   variant="contained"
                   color="primary"
+                  style={{ textTransform: "none" }}
                   onClick={() => {
                     append({
                       title: "",

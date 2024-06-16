@@ -8,7 +8,7 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom";
 import { errorNoti } from "utils/notification";
 
 export const errorHandlers = {
-  onError: (error) => errorNoti("Đã xảy ra lỗi trong khi tải dữ liệu!", 3000),
+  onError: (error) => errorNoti("Error loading data", 3000),
 };
 
 const TargetManager = () => {
@@ -48,7 +48,7 @@ const TargetManager = () => {
             </Grid>
             <Grid item md={8} sm={8} xs={8}>
               <Typography>
-                <b>:</b> {data?.manager?.lastName + " " + data?.manager?.firstName}
+                <b>:</b> {data?.manager?.firstName} {data?.manager?.lastName}
               </Typography>
               <Typography>
                 <div

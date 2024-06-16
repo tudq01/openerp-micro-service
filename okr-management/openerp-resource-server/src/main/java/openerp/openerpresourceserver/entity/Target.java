@@ -45,11 +45,29 @@ public class Target {
     @Column(name = "user_id")
     private String userId;
 
+    @Column(name = "key_result_id")
+    private Long keyResultId;
+
     @Column(name = "target_category_id")
     private Integer targetCategoryId;
 
     @Column(name = "period_id")
     private Long periodId;
+
+    @Column(name = "parent_id")
+    private Long parentId;
+
+    @Column(name = "team_id")
+    private Long teamId;
+
+    @JoinColumn(name = "parent_id", referencedColumnName = "id", insertable = false, updatable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    // @JsonIgnore
+    private Target parentTarget;
+
+    @JoinColumn(name = "team_id", referencedColumnName = "id", insertable = false, updatable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Team team;
 
     @Enumerated(EnumType.STRING)
     private TargetStatus status;
@@ -67,9 +85,9 @@ public class Target {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "reviewer_id", nullable = false, referencedColumnName = "user_login_id")
+    @JoinColumn(name = "key_result_id", nullable = false, referencedColumnName = "id", insertable = false, updatable = false)
     // @JsonIgnore it will not show nested join data
-    private User reviewer;
+    private KeyResult keyResult;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "period_id", nullable = false, referencedColumnName = "id", insertable = false, updatable = false)
@@ -80,6 +98,9 @@ public class Target {
     @JoinColumn(name = "target_category_id", nullable = false, referencedColumnName = "id", insertable = false, updatable = false)
     // @JsonIgnore
     private TargetCategory targetType;
+
+    @Column(name = "approved_at")
+    private Date approvedAt;
 
     @CreationTimestamp
     @Column(name = "created_stamp")

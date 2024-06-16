@@ -1,5 +1,7 @@
 package openerp.openerpresourceserver.repo;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,11 +22,10 @@ public interface TargetRepo extends JpaRepository<Target, Long> {
                         @Param("type") String type,
                         @Param("fromDate") String fromDate, @Param("toDate") String toDate, Pageable pageable);
 
-        @Query(value = "SELECT t.id, t.title, t.progress, t.from_date, t.to_date, t.user_id, t.target_category_id, t.status, t.type, t.created_stamp, t.last_updated_stamp,t.reviewer_id,t.period_id "
+        @Query(value = "SELECT t.id, t.title, t.progress, t.from_date, t.to_date, t.user_id, t.target_category_id, t.status, t.type, t.created_stamp, t.last_updated_stamp,t.key_result_id,t.period_id, t.parent_id,t.approved_at, t.team_id "
                         + "FROM okr_target t "
-                        + "JOIN okr_team_member m ON t.user_id = m.user_id "
                         + "WHERE t.period_id = :periodId "
-                        + "AND  m.team_id = :teamId "
+                        + "AND (:teamId IS NULL OR t.team_id = :teamId) "
                         + "AND (:userId IS NULL OR t.user_id = :userId) "
                         + "AND t.type = :type "
                         + "AND (:keyword IS NULL OR LOWER(t.title) LIKE CONCAT('%', LOWER(:keyword), '%'))"
@@ -37,5 +38,16 @@ public interface TargetRepo extends JpaRepository<Target, Long> {
                         @Param("type") String type,
                         @Param("teamId") int teamId,
                         @Param("fromDate") String fromDate, @Param("toDate") String toDate, Pageable pageable);
+
+        @Query(value = "SELECT t.id, t.title, t.progress, t.from_date, t.to_date, t.user_id, t.target_category_id, t.status, t.type, t.created_stamp, t.last_updated_stamp,t.key_result_id,t.period_id, t.parent_id,t.approved_at, t.team_id "
+                        + "FROM okr_target t "
+
+                        + "WHERE t.key_result_id = :keyResultId ", nativeQuery = true)
+        Target findTargetByKeyResult(
+                        Long keyResultId);
+
+        @Query(value = "SELECT * FROM okr_target t "
+                        + "WHERE t.period_id = :periodId ", nativeQuery = true)
+        List<Target> findReportTarget(Long periodId);
 
 }

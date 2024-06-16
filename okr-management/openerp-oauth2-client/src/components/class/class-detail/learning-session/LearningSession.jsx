@@ -1,20 +1,19 @@
-import React, { useEffect, useState } from "react";
-import { StandardTable } from "erp-hust/lib/StandardTable";
-import IconButton from "@mui/material/IconButton";
-import EditIcon from "@mui/icons-material/Edit";
 import { Link } from "@material-ui/core/";
-import { Link as RouterLink } from "react-router-dom";
-import { request } from "../../../../api";
+import EditIcon from "@mui/icons-material/Edit";
 import Button from "@mui/material/Button";
-import { errorNoti, successNoti } from "../../../../utils/notification";
+import IconButton from "@mui/material/IconButton";
+import { StandardTable } from "erp-hust/lib/StandardTable";
+import { useEffect, useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import ModalAddHall from "views/ModalAddHall";
 import ModalEditHall from "views/ModalEditHall";
+import { request } from "../../../../api";
+import { errorNoti, successNoti } from "../../../../utils/notification";
 
 function LearningSession({ id }) {
   const [halls, setHall] = useState({ content: [], totalElements: 0 });
   const [filterParams, setFilterParams] = useState({ name: "", page: 0, size: 20 });
   const [detailId, setDetail] = useState();
-
 
   useEffect(getHalls, [filterParams]);
 
@@ -26,33 +25,21 @@ function LearningSession({ id }) {
       });
     };
     let errorHandlers = {
-      onError: (error) => errorNoti("Đã xảy ra lỗi trong khi tải dữ liệu!", 3000),
+      onError: (error) => errorNoti("Error loading data", 3000),
     };
-    request(
-      "GET",
-      `/halls`,
-      successHandler,
-      errorHandlers,
-      null,
-      { params: filterParams }
-    );
+    request("GET", `/halls`, successHandler, errorHandlers, null, { params: filterParams });
   }
-    
+
   function deleteHall(deletedPermission) {
     let successHandler = () => {
       successNoti("Đã thu hồi quyền, xem kết quả ở bảng");
-      setHall(
-        halls.filter((permission) => permission !== deletedPermission)
-      );
+      setHall(halls.filter((permission) => permission !== deletedPermission));
     };
     let errorHandlers = {
       onError: () => errorNoti("Đã xảy ra lỗi "),
     };
     request("DELETE", `/halls/${deletedPermission}`, successHandler, errorHandlers);
   }
-  
-  
-
 
   const columns = [
     {
@@ -94,7 +81,7 @@ function LearningSession({ id }) {
       ),
     },
   ];
-  
+
   const [openModalAddHall, setOpenModalAddHall] = useState(false);
   const handleCloseModal = () => {
     setOpenModalAddHall(false);
@@ -119,9 +106,9 @@ function LearningSession({ id }) {
     // });
   };
 
-   useEffect(() => {
-     if (detailId) setOpenModalEditHall(true);
-   }, [detailId]);
+  useEffect(() => {
+    if (detailId) setOpenModalEditHall(true);
+  }, [detailId]);
 
   return (
     <div>
@@ -162,11 +149,7 @@ function LearningSession({ id }) {
         onChangePage={(page, size) => setFilterParams({ ...filterParams, page, size })}
         onSearchChange={(search) => setFilterParams({ page: 0, size: filterParams.size, name: search })}
       />
-      <ModalAddHall
-        isOpen={openModalAddHall}
-        handleSuccess={handleAddHall}
-        handleClose={handleCloseModal}
-      />
+      <ModalAddHall isOpen={openModalAddHall} handleSuccess={handleAddHall} handleClose={handleCloseModal} />
       {detailId && (
         <ModalEditHall
           hallId={detailId}

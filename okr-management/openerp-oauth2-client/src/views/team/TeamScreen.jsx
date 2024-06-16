@@ -1,23 +1,24 @@
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+
 import { Button, IconButton } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "api";
 import { StandardTable } from "erp-hust/lib/StandardTable";
 import { useState } from "react";
-import { useHistory, useParams } from "react-router-dom/cjs/react-router-dom";
+import { useParams } from "react-router-dom/cjs/react-router-dom";
 import { errorNoti, successNoti } from "utils/notification";
 
 import { Link } from "@material-ui/core/";
 import ModalAddTeam from "components/modal/ModalAddTeam";
 import { Link as RouterLink } from "react-router-dom";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 const TeamScreen = () => {
   const [filterParams, setFilterParams] = useState({ page: 0, size: 5 });
-  const [detailId, setDetail] = useState();
+
   const queryClient = useQueryClient();
   const history = useHistory();
-
   const router = useParams();
   const id = router.id;
 
@@ -33,7 +34,7 @@ const TeamScreen = () => {
       //   setTarget(res);
       // };
       let errorHandlers = {
-        onError: (error) => errorNoti("Đã xảy ra lỗi trong khi tải dữ liệu!", 3000),
+        onError: (error) => errorNoti("Error loading data", 3000),
       };
 
       const res = await request("GET", `/departments/${id}/teams`, null, errorHandlers, null, { params: filterParams });
@@ -45,7 +46,7 @@ const TeamScreen = () => {
   function deleteHall(deletedId) {
     let successHandler = () => {
       successNoti("Delete successfully");
-      queryClient.invalidateQueries(["user-targets"]);
+      queryClient.invalidateQueries(["teams"]);
       // const item = halls.content.filter((item) => item.id !== deletedPermission);
 
       // setHall({
@@ -80,10 +81,13 @@ const TeamScreen = () => {
             variant="contained"
             color="success"
             onClick={() => {
-              history.push(`/target/${contest.id}`);
+              history.push(`/target/all-team-okr/${contest.id}`);
             }}
           >
-            <EditIcon />
+            <div className="flex flex-row gap-2 items-center">
+              <EditIcon />
+              <span className="text-sm">View OKR</span>
+            </div>
           </IconButton>
 
           <IconButton
@@ -136,8 +140,9 @@ const TeamScreen = () => {
                     setOpenModalAddHall(true);
                   }}
                   color="primary"
+                  style={{ textTransform: "none" }}
                 >
-                  Add team
+                  Add Team
                 </Button>
               );
             },

@@ -31,7 +31,7 @@ const TeamMember = () => {
       //   setTarget(res);
       // };
       let errorHandlers = {
-        onError: (error) => errorNoti("Đã xảy ra lỗi trong khi tải dữ liệu!", 3000),
+        onError: (error) => errorNoti("Error loading data", 3000),
       };
 
       const res = await request("GET", `/teams/${id}/member`, null, errorHandlers, null, { params: filterParams });
@@ -120,8 +120,9 @@ const TeamMember = () => {
                     setOpenModalAddHall(true);
                   }}
                   color="primary"
+                  style={{ textTransform: "none" }}
                 >
-                  Add member
+                  Add Member
                 </Button>
               );
             },

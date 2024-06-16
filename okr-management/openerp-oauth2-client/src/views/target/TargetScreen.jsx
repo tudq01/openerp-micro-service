@@ -21,9 +21,18 @@ import SelectPeriod from "components/select/SelectPeriod";
 import { debounce } from "lodash";
 
 export const capitalizeWords = (str) => {
-  return str.replace(/_/g, " ").replace(/\b\w/g, function (char) {
-    return char.toUpperCase();
+  return str
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
+
+export const caculateScore = (result) => {
+  let score = 0;
+  result.keyResults.forEach((item) => {
+    score += (item.progress * item.weighted) / 100;
   });
+  return (score / 100).toFixed(1);
 };
 
 export const getColor = (status) => {
@@ -68,11 +77,8 @@ const TargetScreen = () => {
   const { data } = useQuery({
     queryKey: ["user-targets", filterParams],
     queryFn: async () => {
-      // let successHandler = (res) => {
-      //   setTarget(res);
-      // };
       let errorHandlers = {
-        onError: (error) => errorNoti("Đã xảy ra lỗi trong khi tải dữ liệu!", 3000),
+        onError: (error) => errorNoti("Error loading data", 3000),
       };
 
       const res = await request("GET", `/targets/me`, null, errorHandlers, null, { params: filterParams });
@@ -85,12 +91,6 @@ const TargetScreen = () => {
     let successHandler = () => {
       successNoti("Delete successfully");
       queryClient.invalidateQueries(["user-targets"]);
-      // const item = halls.content.filter((item) => item.id !== deletedPermission);
-
-      // setHall({
-      //   content: item,
-      //   totalElements: item.length,
-      // });
     };
     let errorHandlers = {
       onError: () => errorNoti("Đã xảy ra lỗi "),
@@ -170,7 +170,7 @@ const TargetScreen = () => {
       cellStyle: {
         width: "16%",
       },
-      render: (rowData) => <>{dayjs(rowData.fromDate).format("DD/MM/YYYY")}</>,
+      render: (rowData) => <>{rowData.fromDate && dayjs(rowData.fromDate).format("DD/MM/YYYY")}</>,
     },
     {
       title: "To",
@@ -178,7 +178,7 @@ const TargetScreen = () => {
       cellStyle: {
         width: "16%",
       },
-      render: (rowData) => <>{dayjs(rowData.toDate).format("DD/MM/YYYY")}</>,
+      render: (rowData) => <>{rowData.toDate && dayjs(rowData.toDate).format("DD/MM/YYYY")}</>,
     },
     {
       title: "Status",
@@ -192,6 +192,18 @@ const TargetScreen = () => {
         </>
       ),
       // default,error,info,primary,secondary,success,warning
+    },
+    {
+      title: "Score",
+      field: "score",
+      cellStyle: {
+        width: "15%",
+      },
+      render: (data) => (
+        <>
+          <Chip label={caculateScore(data)} color={getColor(data.status)} />
+        </>
+      ),
     },
     {
       title: "",
@@ -227,7 +239,7 @@ const TargetScreen = () => {
     queryKey: ["target-period-select"],
     queryFn: async () => {
       let errorHandlers = {
-        onError: (error) => errorNoti("Đã xảy ra lỗi trong khi tải dữ liệu!", 3000),
+        onError: (error) => errorNoti("Error loading data", 3000),
       };
 
       const res = await request("GET", `/targets/period`, null, errorHandlers, null, { params: { page: 0, size: 10 } });
@@ -327,7 +339,7 @@ const TargetScreen = () => {
                     periodId: prev.periodId,
                   };
                 });
-              
+
                 queryClient.invalidateQueries(["user-targets"]);
               }}
             >
@@ -342,8 +354,9 @@ const TargetScreen = () => {
               setOpenModalAddHall(true);
             }}
             color="primary"
+            style={{ textTransform: "none" }}
           >
-            Add target
+            Add Target
           </Button>
         </div>
         <StandardTable
@@ -380,14 +393,14 @@ const TargetScreen = () => {
                           key={id}
                           style={{ display: "flex", flexDirection: "row", gap: "10px", alignItems: "center" }}
                         >
-                          <Stack spacing={2} direction="row" alignItems={"center"} key={id} className="mb-3 w-[30.7%]">
+                          <Stack spacing={2} direction="row" alignItems={"center"} key={id} className="mb-3 w-[27%]">
                             <Chip variant="filled" color="warning" label={"KR"} size="small" />
                             <Typography
                               variant="subtitle1"
                               gutterBottom
                               className="hover:underline cursor-pointer"
                               onClick={() => {
-                                history.push(`/target/${item.id}`);
+                                history.push(`/target/key-result/${item.id}`);
                               }}
                             >
                               {item.title}

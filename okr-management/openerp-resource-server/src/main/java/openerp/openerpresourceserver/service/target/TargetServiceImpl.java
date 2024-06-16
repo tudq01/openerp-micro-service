@@ -87,6 +87,11 @@ public class TargetServiceImpl implements TargetService {
             target.setPeriodId(newEntity.getPeriodId());
         }
 
+        target.setParentId(newEntity.getParentId());
+        target.setApprovedAt(newEntity.getApprovedAt());
+        target.setKeyResultId(newEntity.getKeyResultId());
+        target.setTeamId(newEntity.getTeamId());
+
         return targetRepo.save(target);
 
     }

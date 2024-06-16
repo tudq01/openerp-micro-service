@@ -20,11 +20,13 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom";
 import { formatDate } from "utils/date";
 import { errorNoti, successNoti } from "utils/notification";
 import { TARGET_STATUS } from "utils/StatusEnum";
+import { caculateScore } from "../TargetScreen";
 
 export const capitalizeWords = (str) => {
-  return str.replace(/_/g, " ").replace(/\b\w/g, function (char) {
-    return char.toUpperCase();
-  });
+  return str
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
 };
 
 export const getColor = (status) => {
@@ -47,7 +49,7 @@ export const getColor = (status) => {
 };
 
 // okr for team
-const initState = { periodId:null,keyword: null, userId: null, fromDate: null, toDate: null, page: 0, size: 5 };
+const initState = { periodId: null, keyword: null, userId: null, fromDate: null, toDate: null, page: 0, size: 5 };
 const TeamScreen = () => {
   const [filterParams, setFilterParams] = useState(initState);
   const [detailId, setDetail] = useState();
@@ -66,7 +68,7 @@ const TeamScreen = () => {
       //   setTarget(res);
       // };
       let errorHandlers = {
-        onError: (error) => errorNoti("Đã xảy ra lỗi trong khi tải dữ liệu!", 3000),
+        onError: (error) => errorNoti("Error loading data", 3000),
       };
 
       const res = await request("GET", `/teams/me`, null, errorHandlers, null, {});
@@ -206,6 +208,18 @@ const TeamScreen = () => {
       // default,error,info,primary,secondary,success,warning
     },
     {
+      title: "Score",
+      field: "score",
+      cellStyle: {
+        width: "15%",
+      },
+      render: (data) => (
+        <>
+          <Chip label={caculateScore(data)} color={getColor(data.status)} />
+        </>
+      ),
+    },
+    {
       title: "",
       cellStyle: {
         width: "8%",
@@ -243,7 +257,7 @@ const TeamScreen = () => {
   //     //   setTarget(res);
   //     // };
   //     let errorHandlers = {
-  //       onError: (error) => errorNoti("Đã xảy ra lỗi trong khi tải dữ liệu!", 3000),
+  //       onError: (error) => errorNoti("Error loading data", 3000),
   //     };
 
   //     const res = await request("GET", `/users/manager`, null, errorHandlers, null, { params: { page: 0, size: 100 } });
@@ -292,14 +306,13 @@ const TeamScreen = () => {
                 endAdornment: <SearchIcon />,
               }}
             />
-         
+
             <Select
               labelId="demo-simple-select"
               value={filterParams.userId ?? ""}
               placeholder="Select user"
               // readOnly
               size="small"
-              label="user"
               onChange={(e) => {
                 setFilterParams({ ...filterParams, userId: e.target.value });
               }}
@@ -348,9 +361,9 @@ const TeamScreen = () => {
             </LocalizationProvider>
             <Button
               onClick={() => {
-               setFilterParams((prev) => {
-                 return { ...initState, periodId: prev.periodId };
-               });
+                setFilterParams((prev) => {
+                  return { ...initState, periodId: prev.periodId };
+                });
                 queryClient.invalidateQueries(["user-targets-teams-member"]);
               }}
             >
@@ -365,8 +378,9 @@ const TeamScreen = () => {
               setOpenModalAddHall(true);
             }}
             color="primary"
+            style={{ textTransform: "none" }}
           >
-            Add target
+            Add Target
           </Button>
         </div>
         <StandardTable
@@ -403,14 +417,14 @@ const TeamScreen = () => {
                           key={id}
                           style={{ display: "flex", flexDirection: "row", gap: "10px", alignItems: "center" }}
                         >
-                          <Stack spacing={2} direction="row" alignItems={"center"} key={id} className="mb-3 w-[26.8%]">
+                          <Stack spacing={2} direction="row" alignItems={"center"} key={id} className="mb-3 w-[19.8%]">
                             <Chip variant="filled" color="warning" label={"KR"} size="small" />
                             <Typography
                               variant="subtitle1"
                               gutterBottom
                               className="hover:underline cursor-pointer"
                               onClick={() => {
-                                history.push(`/target/${item.id}`);
+                                history.push(`/target/key-result/${item.id}`);
                               }}
                             >
                               {item.title}
@@ -451,8 +465,8 @@ const TeamScreen = () => {
                             </Box>
                           </Stack>
 
-                          <div className="w-[17%]">{formatDate(item.fromDate)}</div>
-                          <div className="w-[17%]">{formatDate(item.toDate)}</div>
+                          <div className="w-[12%]">{formatDate(item.fromDate)}</div>
+                          <div className="w-[12%]">{formatDate(item.toDate)}</div>
                         </div>
                         // <div key={id} style={{ display: "flex", flexDirection: "row", gap: "10px" }}>
                         //   <div className="font-bold text-green-400">{item.title}</div>

@@ -7,7 +7,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "api";
-import ModalAddTarget from "components/modal/ModalAddTarget";
+
 import dayjs from "dayjs";
 import { StandardTable } from "erp-hust/lib/StandardTable";
 import { useState } from "react";
@@ -15,8 +15,8 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom";
 import { errorNoti, successNoti } from "utils/notification";
 
 import { TextField } from "@material-ui/core";
-import { debounce } from "lodash";
 import ModalAddPeriod from "components/modal/ModalAddPeriod";
+import { debounce } from "lodash";
 
 const PeriodScreen = () => {
   const [filterParams, setFilterParams] = useState({
@@ -42,7 +42,7 @@ const PeriodScreen = () => {
       //   setTarget(res);
       // };
       let errorHandlers = {
-        onError: (error) => errorNoti("Đã xảy ra lỗi trong khi tải dữ liệu!", 3000),
+        onError: (error) => errorNoti("Error loading data", 3000),
       };
 
       const res = await request("GET", `/targets/period`, null, errorHandlers, null, { params: filterParams });
@@ -65,7 +65,7 @@ const PeriodScreen = () => {
     let errorHandlers = {
       onError: () => errorNoti("Đã xảy ra lỗi "),
     };
-    request("DELETE", `/targets/${deletedId}`, successHandler, errorHandlers);
+    request("DELETE", `/targets/period/${deletedId}`, successHandler, errorHandlers);
   }
 
   const columns = [
@@ -202,15 +202,15 @@ const PeriodScreen = () => {
             </Button>
           </div>
           <Button
-            className=""
             size="small"
             variant="contained"
+            style={{ textTransform: "none" }}
             onClick={() => {
               setOpenModalAddHall(true);
             }}
             color="primary"
           >
-            Add period
+            Add Period
           </Button>
         </div>
         <StandardTable

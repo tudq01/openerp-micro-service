@@ -5,14 +5,16 @@ import { Suspense, useEffect } from "react";
 import { Route, Switch, useLocation } from "react-router-dom";
 import { useNotificationState } from "state/NotificationState";
 import NotFound from "views/errors/NotFound";
-import ClassRouter from "./ClassRouter";
+
 import DepartmentRouter from "./DepartmentRouter";
-import HallRouter from "./HallRouter";
+
 import PrivateRoute from "./PrivateRoute";
 import TargetRouter from "./TargetRouter";
-import TeacherRouter from "./TeacherRouter";
-import TeamRouter from "./TeamRouter";
+
+import TargetTypeScreen from "views/target-category/TargetCategory";
+import TargetReportScreen from "views/target/TargetReport";
 import ManagerRouter from "./ManagerRouter";
+import TeamRouter from "./TeamRouter";
 
 const styles = {
   loadingProgress: {
@@ -41,13 +43,13 @@ function MainAppRouter(props) {
         <Switch>
           <Route component={() => <></>} exact path="/" />
           {/* <PrivateRoute component={DemoScreen} exact path="/demo" /> */}
-          <PrivateRoute component={TeacherRouter} path="/teacher" />
-          <PrivateRoute component={ClassRouter} path="/student" />
-          <PrivateRoute component={HallRouter} path="/hall" />
+
           <PrivateRoute component={TargetRouter} path="/target" />
           <PrivateRoute component={DepartmentRouter} path="/department" />
           <PrivateRoute component={ManagerRouter} path="/manager" />
           <PrivateRoute component={TeamRouter} path="/team" />
+          <PrivateRoute component={TargetReportScreen} path="/report" />
+          <PrivateRoute component={TargetTypeScreen} path="/target-category" />
           {/* <Route component={error} path="*" /> */}
           <Route component={NotFound} />
         </Switch>

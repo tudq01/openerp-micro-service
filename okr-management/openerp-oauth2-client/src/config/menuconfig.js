@@ -9,9 +9,9 @@ import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import EventNoteIcon from "@mui/icons-material/EventNote";
 import FastfoodIcon from "@mui/icons-material/Fastfood";
 import FormatListNumberedIcon from "@mui/icons-material/FormatListNumbered";
-import HomeSharpIcon from "@mui/icons-material/HomeSharp";
+
 import LocalGroceryStoreIcon from "@mui/icons-material/LocalGroceryStore";
-import LocalLibraryIcon from "@mui/icons-material/LocalLibrary";
+
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
 import PeopleIcon from "@mui/icons-material/People";
@@ -28,7 +28,7 @@ import GroupsIcon from "@mui/icons-material/Groups";
 import { general } from "./menuconfig/general";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 
-import { company, department, departmentOkr, target, team } from "./menuconfig/target";
+import { company, department, departmentOkr, target, team,type } from "./menuconfig/target";
 import { user } from "./menuconfig/user";
 
 export const MENUS = [];
@@ -40,6 +40,7 @@ MENUS.push(departmentOkr);
 MENUS.push(target);
 MENUS.push(department);
 MENUS.push(team);
+MENUS.push(type);
 
 export const menuIconMap = new Map();
 

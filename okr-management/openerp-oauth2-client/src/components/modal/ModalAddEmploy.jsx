@@ -11,7 +11,7 @@ import Select from "@mui/material/Select";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "api";
 import { Controller, FormProvider, useForm } from "react-hook-form";
-import { useParams } from "react-router-dom/cjs/react-router-dom.min";
+
 import { errorNoti, successNoti } from "utils/notification";
 import * as z from "zod";
 const useStyles = makeStyles((theme) => ({
@@ -50,8 +50,6 @@ export const ROLE = ["STAFF", "MANAGER", "HEAD_MANAGER"];
 const ModalAddEmploy = ({ isOpen, handleSuccess, handleClose }) => {
   const classes = useStyles();
   const queryClient = useQueryClient();
-  const router = useParams();
-  const id = router.id;
 
   const methods = useForm({
     resolver: zodResolver(
@@ -80,7 +78,7 @@ const ModalAddEmploy = ({ isOpen, handleSuccess, handleClose }) => {
     };
 
     let errorHandlers = {
-      onError: (error) => errorNoti("Error create!", 3000),
+      onError: (error) => errorNoti(error?.response?.data, 3000),
     };
 
     request("post", `/users/manager`, successHandler, errorHandlers, values);
@@ -176,10 +174,17 @@ const ModalAddEmploy = ({ isOpen, handleSuccess, handleClose }) => {
               </Grid>
 
               <CardActions className={classes.action}>
-                <Button type="button" variant="contained" color="default">
+                <Button
+                  type="button"
+                  variant="contained"
+                  color="default"
+                  style={{ textTransform: "none" }}
+                  onClick={handleClose}
+                >
                   Cancel
                 </Button>
-                <Button type="submit" variant="contained" color="primary">
+
+                <Button type="submit" variant="contained" color="primary" style={{ textTransform: "none" }}>
                   Add
                 </Button>
               </CardActions>

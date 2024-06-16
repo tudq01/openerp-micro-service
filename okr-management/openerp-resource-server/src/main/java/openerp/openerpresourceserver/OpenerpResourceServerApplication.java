@@ -10,12 +10,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true)
 @EnableJpaRepositories
-@EnableJpaAuditing 
+@EnableJpaAuditing
 @SpringBootApplication
 public class OpenerpResourceServerApplication {
     // too many client
     public static void main(String[] args) {
         SpringApplication.run(OpenerpResourceServerApplication.class, args);
     }
-
 }

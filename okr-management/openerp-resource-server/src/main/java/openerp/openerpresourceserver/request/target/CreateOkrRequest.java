@@ -12,4 +12,5 @@ public class CreateOkrRequest {
     Integer progress;
     Date fromDate;
     Date toDate;
+    Integer weighted;
 }

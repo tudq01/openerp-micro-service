@@ -18,10 +18,12 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom";
 import { formatDate } from "utils/date";
 import { errorNoti, successNoti } from "utils/notification";
 import { TARGET_STATUS } from "utils/StatusEnum";
+import { caculateScore } from "../TargetScreen";
 export const capitalizeWords = (str) => {
-  return str.replace(/_/g, " ").replace(/\b\w/g, function (char) {
-    return char.toUpperCase();
-  });
+  return str
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
 };
 
 export const getColor = (status) => {
@@ -62,7 +64,7 @@ const TargetCompanyScreen = () => {
       //   setTarget(res);
       // };
       let errorHandlers = {
-        onError: (error) => errorNoti("Đã xảy ra lỗi trong khi tải dữ liệu!", 3000),
+        onError: (error) => errorNoti("Error loading data", 3000),
       };
 
       const res = await request("GET", `/targets`, null, errorHandlers, null, { params: filterParams });
@@ -83,7 +85,7 @@ const TargetCompanyScreen = () => {
       // });
     };
     let errorHandlers = {
-      onError: () => errorNoti("Đã xảy ra lỗi "),
+      onError: (error) => errorNoti(error?.response?.data, 3000),
     };
     request("DELETE", `/targets/${deletedId}`, successHandler, errorHandlers);
   }
@@ -197,6 +199,18 @@ const TargetCompanyScreen = () => {
       // default,error,info,primary,secondary,success,warning
     },
     {
+      title: "Score",
+      field: "score",
+      cellStyle: {
+        width: "15%",
+      },
+      render: (data) => (
+        <>
+          <Chip label={caculateScore(data)} color={getColor(data.status)} />
+        </>
+      ),
+    },
+    {
       title: "",
       cellStyle: {
         width: "8%",
@@ -286,8 +300,8 @@ const TargetCompanyScreen = () => {
             <Button
               onClick={() => {
                 setFilterParams((prev) => {
-                  return { ...initState, periodId: prev.periodId }
-                })
+                  return { ...initState, periodId: prev.periodId };
+                });
                 queryClient.invalidateQueries(["user-targets"]);
               }}
             >
@@ -302,8 +316,9 @@ const TargetCompanyScreen = () => {
               setOpenModalAddHall(true);
             }}
             color="primary"
+            style={{ textTransform: "none" }}
           >
-            Add target
+            Add Target
           </Button>
         </div>
         <StandardTable
@@ -341,21 +356,21 @@ const TargetCompanyScreen = () => {
                           key={id}
                           style={{ display: "flex", flexDirection: "row", gap: "10px", alignItems: "center" }}
                         >
-                          <Stack spacing={2} direction="row" alignItems={"center"} key={id} className="mb-3 w-[26.8%]">
+                          <Stack spacing={2} direction="row" alignItems={"center"} key={id} className="mb-3 w-[19.8%]">
                             <Chip variant="filled" color="warning" label={"KR"} size="small" />
                             <Typography
                               variant="subtitle1"
                               gutterBottom
                               className="hover:underline cursor-pointer"
                               onClick={() => {
-                                history.push(`/target/${item.id}`);
+                                history.push(`/target/key-result/${item.id}`);
                               }}
                             >
                               {item.title}
                             </Typography>
                           </Stack>
 
-                          <Stack spacing={2} direction="row" className="w-[12%]">
+                          <Stack spacing={2} direction="row" className="w-[10%]">
                             <Box sx={{ position: "relative", display: "inline-flex" }}>
                               <CircularProgress
                                 disableShrink
@@ -388,8 +403,8 @@ const TargetCompanyScreen = () => {
                               </Box>
                             </Box>
                           </Stack>
-                          <div className="w-[17%]">{formatDate(item.fromDate)}</div>
-                          <div className="w-[17%]">{formatDate(item.toDate)}</div>
+                          <div className="w-[12%]">{formatDate(item.fromDate)}</div>
+                          <div className="w-[12%]">{formatDate(item.toDate)}</div>
                         </div>
                         // <div key={id} style={{ display: "flex", flexDirection: "row", gap: "10px" }}>
                         //   <div className="font-bold text-green-400">{item.title}</div>

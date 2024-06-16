@@ -3,14 +3,15 @@ import { Box, Button, Card, CardActions, CardContent, CardHeader, TextField } fr
 import Grid from "@material-ui/core/Grid";
 import { makeStyles } from "@material-ui/core/styles";
 import ClearIcon from "@mui/icons-material/Clear";
-import IconButton from "@mui/material/IconButton";
-import InputLabel from "@mui/material/InputLabel";
+import { Avatar, IconButton } from "@mui/material";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { request } from "api";
+import FormItem from "components/form/FormItem";
 import dayjs from "dayjs";
 import advancedFormat from "dayjs/plugin/advancedFormat";
+import randomColor from "randomcolor";
 import { useEffect } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { useParams } from "react-router-dom/cjs/react-router-dom";
@@ -18,7 +19,10 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getDirtyFields } from "utils/date";
 import { errorNoti, successNoti } from "utils/notification";
 import * as z from "zod";
-
+const bgColor = randomColor({
+  luminosity: "dark",
+  hue: "random",
+});
 dayjs.extend(advancedFormat);
 const useStyles = makeStyles((theme) => ({
   card: {
@@ -37,7 +41,7 @@ const useStyles = makeStyles((theme) => ({
 
 const DEBOUNCE_TIMEOUT = 500;
 
-const TargetResult = () => {
+const TargetResult = (employeeId) => {
   const classes = useStyles();
   const router = useParams();
   const history = useHistory();
@@ -66,6 +70,15 @@ const TargetResult = () => {
       return res.data[0];
     },
     enabled: !!id,
+  });
+
+  const { data: managers } = useQuery({
+    queryKey: ["your-manager", employeeId],
+    queryFn: async () => {
+      const res = await request("GET", `/users/your-manager`, null, null, null, { params: employeeId });
+      return res.data;
+    },
+    enabled: true,
   });
 
   const {
@@ -130,6 +143,20 @@ const TargetResult = () => {
                 }
               />
               <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <div className="pl-4 flex flex-col gap-3 flex-start">
+                    <span>Manager</span>
+                    <div className="flex flex-row gap-2 items-center">
+                      <IconButton disableRipple component="span" aria-haspopup="true" sx={{ p: 1 }}>
+                        <Avatar alt="account button" sx={{ width: 36, height: 36, background: bgColor }}>
+                          {managers?.manager?.lastName?.split(" ").pop().substring(0, 1).toLocaleUpperCase()}
+                        </Avatar>
+                      </IconButton>
+                      <span>{managers?.manager?.firstName + " " + managers?.manager?.lastName}</span>
+                    </div>
+                  </div>
+                </Grid>
+
                 <Grid item xs={8}>
                   <CardContent>
                     <Box display="flex" flexDirection="column" justifyContent="center" aria-label="Room">
@@ -138,17 +165,18 @@ const TargetResult = () => {
                         name={"selfComment"}
                         render={({ field }) => (
                           <>
-                            <TextField
-                              {...field}
-                              id="name"
-                              value={field.value}
-                              error={errors?.selfComment ? true : false}
-                              onChange={(value) => {
-                                field.onChange(value);
-                              }}
-                              label="Your comment"
-                              InputLabelProps={{ shrink: true }}
-                            />
+                            <FormItem label="Your comment">
+                              <TextField
+                                {...field}
+                                id="name"
+                                value={field.value}
+                                error={errors?.selfComment ? true : false}
+                                onChange={(value) => {
+                                  field.onChange(value);
+                                }}
+                                InputLabelProps={{ shrink: true }}
+                              />
+                            </FormItem>
                           </>
                         )}
                       />
@@ -164,42 +192,37 @@ const TargetResult = () => {
                         name={"selfRank"}
                         render={({ field }) => (
                           <>
-                            <InputLabel
-                              id="demo-simple-select-rank"
-                              style={{ paddingBottom: "3px", paddingLeft: "10px" }}
-                            >
-                              Self Rank
-                            </InputLabel>
-
-                            <Select
-                              labelId="demo-simple-select-rank"
-                              id="your-rank"
-                              value={field.value ?? ""}
-                              // readOnly
-                              label="Status"
-                              onChange={(e) => {
-                                field.onChange(e.target.value);
-                              }}
-                              endAdornment={
-                                <IconButton
-                                  className="mr-6"
-                                  size="small"
-                                  onClick={() => {
-                                    methods.setValue("selfRank", null);
-                                  }}
-                                >
-                                  <ClearIcon fontSize="small" />
-                                </IconButton>
-                              }
-                              displayEmpty
-                              style={{ padding: "5px 0 0 10px" }}
-                            >
-                              {TARGET_RANK.map((item) => (
-                                <MenuItem value={item} key={item} style={{ display: "block", padding: "8px" }}>
-                                  {item}
-                                </MenuItem>
-                              ))}
-                            </Select>
+                            <FormItem label="Self Rank">
+                              <Select
+                                labelId="demo-simple-select-rank"
+                                id="your-rank"
+                                value={field.value ?? ""}
+                                onChange={(e) => {
+                                  field.onChange(e.target.value);
+                                }}
+                                endAdornment={
+                                  methods.watch("selfRank") && (
+                                    <IconButton
+                                      className="mr-6"
+                                      size="small"
+                                      onClick={() => {
+                                        methods.setValue("selfRank", null);
+                                      }}
+                                    >
+                                      <ClearIcon fontSize="small" />
+                                    </IconButton>
+                                  )
+                                }
+                                displayEmpty
+                                style={{ padding: "5px 0 0 10px" }}
+                              >
+                                {TARGET_RANK.map((item) => (
+                                  <MenuItem value={item} key={item} style={{ display: "block", padding: "8px" }}>
+                                    {item}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormItem>
                           </>
                         )}
                       />
@@ -214,17 +237,18 @@ const TargetResult = () => {
                         name={"managerComment"}
                         render={({ field }) => (
                           <>
-                            <TextField
-                              {...field}
-                              id="name"
-                              value={field.value}
-                              error={errors?.managerComment ? true : false}
-                              onChange={(value) => {
-                                field.onChange(value);
-                              }}
-                              label="Manager comment"
-                              InputLabelProps={{ shrink: true }}
-                            />
+                            <FormItem label="Manager comment">
+                              <TextField
+                                {...field}
+                                id="name"
+                                value={field.value}
+                                error={errors?.managerComment ? true : false}
+                                onChange={(value) => {
+                                  field.onChange(value);
+                                }}
+                                InputLabelProps={{ shrink: true }}
+                              />
+                            </FormItem>
                           </>
                         )}
                       />
@@ -240,42 +264,37 @@ const TargetResult = () => {
                         name={"managerRank"}
                         render={({ field }) => (
                           <>
-                            <InputLabel
-                              id="demo-simple-manager-rank"
-                              style={{ paddingBottom: "3px", paddingLeft: "10px" }}
-                            >
-                              Manager Rank
-                            </InputLabel>
-
-                            <Select
-                              labelId="demo-simple-manager-rank"
-                              id="manager-rank"
-                              value={field.value ?? ""}
-                              // readOnly
-                              label="Status"
-                              onChange={(e) => {
-                                field.onChange(e.target.value);
-                              }}
-                              endAdornment={
-                                <IconButton
-                                  className="mr-6"
-                                  size="small"
-                                  onClick={() => {
-                                    methods.setValue("managerRank", null);
-                                  }}
-                                >
-                                  <ClearIcon fontSize="small" />
-                                </IconButton>
-                              }
-                              displayEmpty
-                              style={{ padding: "5px 0 0 10px" }}
-                            >
-                              {TARGET_RANK.map((item) => (
-                                <MenuItem value={item} key={item} style={{ display: "block", padding: "8px" }}>
-                                  {item}
-                                </MenuItem>
-                              ))}
-                            </Select>
+                            <FormItem label="Manager Rank">
+                              <Select
+                                labelId="demo-simple-manager-rank"
+                                id="manager-rank"
+                                value={field.value ?? ""}
+                                onChange={(e) => {
+                                  field.onChange(e.target.value);
+                                }}
+                                endAdornment={
+                                  methods.watch("managerRank") && (
+                                    <IconButton
+                                      className="mr-6"
+                                      size="small"
+                                      onClick={() => {
+                                        methods.setValue("managerRank", null);
+                                      }}
+                                    >
+                                      <ClearIcon fontSize="small" />
+                                    </IconButton>
+                                  )
+                                }
+                                displayEmpty
+                                style={{ padding: "5px 0 0 10px" }}
+                              >
+                                {TARGET_RANK.map((item) => (
+                                  <MenuItem value={item} key={item} style={{ display: "block", padding: "8px" }}>
+                                    {item}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormItem>
                           </>
                         )}
                       />
@@ -286,10 +305,10 @@ const TargetResult = () => {
                 <Grid item xs={4}></Grid>
               </Grid>
               <CardActions className={classes.action}>
-                <Button type="button" variant="contained" color="default">
+                <Button type="button" variant="contained" color="default" style={{ textTransform: "none" }}>
                   Reset
                 </Button>
-                <Button type="submit" variant="contained" color="primary">
+                <Button type="submit" variant="contained" color="primary" style={{ textTransform: "none" }}>
                   {target ? "Update" : "Add"}
                 </Button>
               </CardActions>

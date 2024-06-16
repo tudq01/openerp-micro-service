@@ -1,12 +1,18 @@
 package openerp.openerpresourceserver.service.category;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
+import openerp.openerpresourceserver.entity.Target;
 import openerp.openerpresourceserver.entity.TargetCategory;
 import openerp.openerpresourceserver.repo.TargetCategoryRepo;
 
@@ -16,8 +22,18 @@ public class TargetCategoryServiceImpl implements TargetCategoryService {
     private final TargetCategoryRepo categoryRepo;
 
     @Override
-    public List<TargetCategory> findAll() {
-        return categoryRepo.findAll();
+    public Map<String, Object> findAll(String keyword,
+            int page, int size) {
+        Pageable pagingSort = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "created_stamp"));
+        Page<TargetCategory> pageTuts = categoryRepo.findAll(keyword, pagingSort);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("categories", pageTuts.getContent());
+        response.put("currentPage", pageTuts.getNumber());
+        response.put("totalItems", pageTuts.getTotalElements());
+        response.put("totalPages", pageTuts.getTotalPages());
+
+        return response;
     }
 
     public void create(TargetCategory newEntity) {

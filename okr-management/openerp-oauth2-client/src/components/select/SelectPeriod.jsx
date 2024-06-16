@@ -2,6 +2,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import { useQuery } from "@tanstack/react-query";
 import { request } from "api";
+
 import { errorNoti } from "utils/notification";
 
 const SelectPeriod = ({ filterParams, setFilterParams }) => {
@@ -9,7 +10,7 @@ const SelectPeriod = ({ filterParams, setFilterParams }) => {
     queryKey: ["target-period-select"],
     queryFn: async () => {
       let errorHandlers = {
-        onError: (error) => errorNoti("Đã xảy ra lỗi trong khi tải dữ liệu!", 3000),
+        onError: (error) => errorNoti("Error loading data", 3000),
       };
 
       const res = await request("GET", `/targets/period`, null, errorHandlers, null, {
@@ -20,22 +21,21 @@ const SelectPeriod = ({ filterParams, setFilterParams }) => {
     enabled: true,
   });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const userOptions = periods?.length
     ? periods.map((item) => {
         return { label: item.title, value: item.id };
       })
     : [];
+
   return (
     <Select
       labelId="demo-simple-select-1"
       value={filterParams.periodId ?? ""}
       placeholder="Select period"
-      // readOnly
       size="medium"
-      label="period"
       onChange={(e) => {
         setFilterParams({ ...filterParams, periodId: e.target.value });
-        // history.push(`/target/list?period=${e.target.value}`);
       }}
     >
       {userOptions.map((item) => (

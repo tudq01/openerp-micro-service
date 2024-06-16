@@ -23,7 +23,7 @@ public class TargetCommentServiceImpl implements TargetCommentService {
 
     @Override
     public List<TargetComment> findByDepartment(Long departmentId, int page, int size) {
-        Pageable pagingSort = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "created_stamp"));
+        Pageable pagingSort = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "created_stamp"));
         Page<TargetComment> pageTuts = commentRepo.findByDepartment(departmentId, pagingSort);
 
         return pageTuts.getContent();
@@ -63,7 +63,7 @@ public class TargetCommentServiceImpl implements TargetCommentService {
 
     @Override
     public List<TargetComment> findByParentTargetComments(Long commentId, int page, int size) {
-        Pageable pagingSort = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "created_stamp"));
+        Pageable pagingSort = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "created_stamp"));
         Page<TargetComment> pageTuts = commentRepo.findByParentTargetComments(commentId, pagingSort);
         return pageTuts.getContent();
 
